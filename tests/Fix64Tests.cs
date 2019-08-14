@@ -137,7 +137,7 @@ namespace FixMath.NET
         }
 
         [Fact]
-        public void Substraction()
+        public void Subtraction()
         {
             var terms1 = new[] { Fix64.MinValue, (Fix64)(-1), Fix64.Zero, Fix64.One, Fix64.MaxValue };
             var terms2 = new[] { Fix64.One, (Fix64)(-2), (Fix64)(1.5m), (Fix64)(2), (Fix64)(-1) };
