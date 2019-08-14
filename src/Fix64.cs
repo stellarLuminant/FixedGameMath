@@ -26,6 +26,7 @@ namespace FixMath.NET
         public static readonly Fix64 PiTimes2 = new Fix64(PI_TIMES_2);
         public static readonly Fix64 PiInv = new Fix64(PI_INV);
         public static readonly Fix64 PiOver2Inv = new Fix64(PI_OVER_2_INV);
+        public static readonly Fix64 E = new Fix64(E_CONST);
         static readonly Fix64 Log2Max = new Fix64(LOG2MAX);
         static readonly Fix64 Log2Min = new Fix64(LOG2MIN);
         static readonly Fix64 Ln2 = new Fix64(LN2);
@@ -44,6 +45,7 @@ namespace FixMath.NET
         const long LN2 = 0xB17217F7;
         const long LOG2MAX = 0x1F00000000;
         const long LOG2MIN = -0x2000000000;
+        const long E_CONST = 0x2B7E15162;
         const int LUT_SIZE = (int)(PI_OVER_2 >> 15);
 
         /// <summary>
