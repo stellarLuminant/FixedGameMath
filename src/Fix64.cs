@@ -131,6 +131,22 @@ namespace FixMath.NET
         }
 
         /// <summary>
+        /// Checks if a value has a fractional component.
+        /// </summary>
+        public static bool HasFraction(Fix64 value)
+        {
+            return ((ulong)value.m_rawValue & 0x00000000FFFFFFFFUL) != 0;
+        }
+
+        /// <summary>
+        /// Removes the integral portion of the number and returns only the fractional component.
+        /// </summary>
+        public static Fix64 Fraction(Fix64 value)
+        {
+            return new Fix64((long)((ulong)value.m_rawValue & 0x00000000FFFFFFFFUL));
+        }
+
+        /// <summary>
         /// Adds x and y. Performs saturating addition, i.e. in case of overflow, 
         /// rounds to MinValue or MaxValue depending on sign of operands.
         /// </summary>
