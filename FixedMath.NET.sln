@@ -1,31 +1,42 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
-VisualStudioVersion = 16.0.29613.14
+VisualStudioVersion = 16.0.30503.244
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FixedMath.NET", "src\FixedMath.NET.csproj", "{D46C606E-5826-465F-9983-251E3D3B2F1C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FixedMath.NET", "FixedMath.NET\FixedMath.NET.csproj", "{E88EB600-1704-4745-8A5C-25F4B91364F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{123F94B1-65A5-4BCD-8E1E-7F8B95337444}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{2C33AD44-FFF8-4CF6-AA0A-DB6BF2B1F67F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LUTGenerator", "Tools\LUTGenerator\LUTGenerator.csproj", "{9475E661-D704-454C-90C2-B4424EFB4861}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FixedMath.NET.Tests", "FixedMath.NET.Tests\FixedMath.NET.Tests.csproj", "{0207ECA4-23FF-457D-9CDA-F94A91883829}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x64 = Debug|x64
-		Release|x64 = Release|x64
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D46C606E-5826-465F-9983-251E3D3B2F1C}.Debug|x64.ActiveCfg = Debug|x64
-		{D46C606E-5826-465F-9983-251E3D3B2F1C}.Debug|x64.Build.0 = Debug|x64
-		{D46C606E-5826-465F-9983-251E3D3B2F1C}.Release|x64.ActiveCfg = Release|x64
-		{D46C606E-5826-465F-9983-251E3D3B2F1C}.Release|x64.Build.0 = Release|x64
-		{123F94B1-65A5-4BCD-8E1E-7F8B95337444}.Debug|x64.ActiveCfg = Debug|x64
-		{123F94B1-65A5-4BCD-8E1E-7F8B95337444}.Debug|x64.Build.0 = Debug|x64
-		{123F94B1-65A5-4BCD-8E1E-7F8B95337444}.Release|x64.ActiveCfg = Release|x64
-		{123F94B1-65A5-4BCD-8E1E-7F8B95337444}.Release|x64.Build.0 = Release|x64
+		{E88EB600-1704-4745-8A5C-25F4B91364F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E88EB600-1704-4745-8A5C-25F4B91364F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E88EB600-1704-4745-8A5C-25F4B91364F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E88EB600-1704-4745-8A5C-25F4B91364F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9475E661-D704-454C-90C2-B4424EFB4861}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9475E661-D704-454C-90C2-B4424EFB4861}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9475E661-D704-454C-90C2-B4424EFB4861}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9475E661-D704-454C-90C2-B4424EFB4861}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0207ECA4-23FF-457D-9CDA-F94A91883829}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0207ECA4-23FF-457D-9CDA-F94A91883829}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0207ECA4-23FF-457D-9CDA-F94A91883829}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0207ECA4-23FF-457D-9CDA-F94A91883829}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9475E661-D704-454C-90C2-B4424EFB4861} = {2C33AD44-FFF8-4CF6-AA0A-DB6BF2B1F67F}
+	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {AEE931CD-7648-45DC-9050-C4C5D48CAC5B}
+		SolutionGuid = {76B7107F-9716-4178-8B65-27AFEA591BE6}
 	EndGlobalSection
 EndGlobal

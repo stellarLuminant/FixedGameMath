@@ -1,16 +1,14 @@
 ﻿using System;
-using System.IO;
 using System.Runtime.CompilerServices;
 
-namespace FixMath.NET
+namespace FixedMath.NET
 {
-
     /// <summary>
     /// Represents a Q31.32 fixed-point number.
     /// </summary>
     public partial struct Fix64 : IEquatable<Fix64>, IComparable<Fix64>
     {
-        readonly long m_rawValue;
+        readonly long _rawValue;
 
         // Precision of this type is 2^-32, that is 2,3283064365386962890625E-10
         public static readonly decimal Precision = (decimal)(new Fix64(1L));//0.00000000023283064365386962890625m;
@@ -18,6 +16,7 @@ namespace FixMath.NET
         public static readonly Fix64 MinValue = new Fix64(MIN_VALUE);
         public static readonly Fix64 One = new Fix64(ONE);
         public static readonly Fix64 Zero = new Fix64();
+
         /// <summary>
         /// The value of Pi
         /// </summary>
@@ -32,8 +31,8 @@ namespace FixMath.NET
         static readonly Fix64 Ln2 = new Fix64(LN2);
 
         static readonly Fix64 LutInterval = (Fix64)(LUT_SIZE - 1) / PiOver2;
-        const long MAX_VALUE = long.MaxValue;
-        const long MIN_VALUE = long.MinValue;
+        const long MAX_VALUE = Int64.MaxValue;
+        const long MIN_VALUE = Int64.MinValue;
         const int NUM_BITS = 64;
         const int FRACTIONAL_PLACES = 32;
         const long ONE = 1L << FRACTIONAL_PLACES;
@@ -55,8 +54,8 @@ namespace FixMath.NET
         public static int Sign(Fix64 value)
         {
             return
-                value.m_rawValue < 0 ? -1 :
-                value.m_rawValue > 0 ? 1 :
+                value._rawValue < 0 ? -1 :
+                value._rawValue > 0 ? 1 :
                 0;
         }
 
@@ -67,14 +66,14 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 Abs(Fix64 value)
         {
-            if (value.m_rawValue == MIN_VALUE)
+            if (value._rawValue == MIN_VALUE)
             {
                 return MaxValue;
             }
 
             // branchless implementation, see http://www.strchr.com/optimized_abs_function
-            var mask = value.m_rawValue >> 63;
-            return new Fix64((value.m_rawValue + mask) ^ mask);
+            var mask = value._rawValue >> 63;
+            return new Fix64((value._rawValue + mask) ^ mask);
         }
 
         /// <summary>
@@ -84,8 +83,8 @@ namespace FixMath.NET
         public static Fix64 FastAbs(Fix64 value)
         {
             // branchless implementation, see http://www.strchr.com/optimized_abs_function
-            var mask = value.m_rawValue >> 63;
-            return new Fix64((value.m_rawValue + mask) ^ mask);
+            var mask = value._rawValue >> 63;
+            return new Fix64((value._rawValue + mask) ^ mask);
         }
 
 
@@ -95,7 +94,7 @@ namespace FixMath.NET
         public static Fix64 Floor(Fix64 value)
         {
             // Just zero out the fractional part
-            return new Fix64((long)((ulong)value.m_rawValue & 0xFFFFFFFF00000000));
+            return new Fix64((long)((ulong)value._rawValue & 0xFFFFFFFF00000000));
         }
 
         /// <summary>
@@ -103,7 +102,7 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 Ceiling(Fix64 value)
         {
-            var hasFractionalPart = (value.m_rawValue & 0x00000000FFFFFFFF) != 0;
+            var hasFractionalPart = (value._rawValue & 0x00000000FFFFFFFF) != 0;
             return hasFractionalPart ? Floor(value) + One : value;
         }
 
@@ -113,7 +112,7 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 Round(Fix64 value)
         {
-            var fractionalPart = value.m_rawValue & 0x00000000FFFFFFFF;
+            var fractionalPart = value._rawValue & 0x00000000FFFFFFFF;
             var integralPart = Floor(value);
             if (fractionalPart < 0x80000000)
             {
@@ -125,7 +124,7 @@ namespace FixMath.NET
             }
             // if number is halfway between two values, round to the nearest even number
             // this is the method used by System.Math.Round().
-            return (integralPart.m_rawValue & ONE) == 0
+            return (integralPart._rawValue & ONE) == 0
                        ? integralPart
                        : integralPart + One;
         }
@@ -135,7 +134,7 @@ namespace FixMath.NET
         /// </summary>
         public static bool HasFraction(Fix64 value)
         {
-            return ((ulong)value.m_rawValue & 0x00000000FFFFFFFFUL) != 0;
+            return ((ulong)value._rawValue & 0x00000000FFFFFFFFUL) != 0;
         }
 
         /// <summary>
@@ -143,7 +142,7 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 Fraction(Fix64 value)
         {
-            return new Fix64((long)((ulong)value.m_rawValue & 0x00000000FFFFFFFFUL));
+            return new Fix64((long)((ulong)value._rawValue & 0x00000000FFFFFFFFUL));
         }
 
         /// <summary>
@@ -152,8 +151,8 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 operator +(Fix64 x, Fix64 y)
         {
-            var xl = x.m_rawValue;
-            var yl = y.m_rawValue;
+            var xl = x._rawValue;
+            var yl = y._rawValue;
             var sum = xl + yl;
             // if signs of operands are equal and signs of sum and x are different
             if (((~(xl ^ yl) & (xl ^ sum)) & MIN_VALUE) != 0)
@@ -168,7 +167,7 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 FastAdd(Fix64 x, Fix64 y)
         {
-            return new Fix64(x.m_rawValue + y.m_rawValue);
+            return new Fix64(x._rawValue + y._rawValue);
         }
 
         /// <summary>
@@ -177,8 +176,8 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 operator -(Fix64 x, Fix64 y)
         {
-            var xl = x.m_rawValue;
-            var yl = y.m_rawValue;
+            var xl = x._rawValue;
+            var yl = y._rawValue;
             var diff = xl - yl;
             // if signs of operands are different and signs of sum and x are different
             if ((((xl ^ yl) & (xl ^ diff)) & MIN_VALUE) != 0)
@@ -193,7 +192,7 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 FastSub(Fix64 x, Fix64 y)
         {
-            return new Fix64(x.m_rawValue - y.m_rawValue);
+            return new Fix64(x._rawValue - y._rawValue);
         }
 
         static long AddOverflowHelper(long x, long y, ref bool overflow)
@@ -207,8 +206,8 @@ namespace FixMath.NET
         public static Fix64 operator *(Fix64 x, Fix64 y)
         {
 
-            var xl = x.m_rawValue;
-            var yl = y.m_rawValue;
+            var xl = x._rawValue;
+            var yl = y._rawValue;
 
             var xlo = (ulong)(xl & 0x00000000FFFFFFFF);
             var xhi = xl >> FRACTIONAL_PLACES;
@@ -289,8 +288,8 @@ namespace FixMath.NET
         public static Fix64 FastMul(Fix64 x, Fix64 y)
         {
 
-            var xl = x.m_rawValue;
-            var yl = y.m_rawValue;
+            var xl = x._rawValue;
+            var yl = y._rawValue;
 
             var xlo = (ulong)(xl & 0x00000000FFFFFFFF);
             var xhi = xl >> FRACTIONAL_PLACES;
@@ -322,8 +321,8 @@ namespace FixMath.NET
 
         public static Fix64 operator /(Fix64 x, Fix64 y)
         {
-            var xl = x.m_rawValue;
-            var yl = y.m_rawValue;
+            var xl = x._rawValue;
+            var yl = y._rawValue;
 
             if (yl == 0)
             {
@@ -381,9 +380,9 @@ namespace FixMath.NET
         public static Fix64 operator %(Fix64 x, Fix64 y)
         {
             return new Fix64(
-                x.m_rawValue == MIN_VALUE & y.m_rawValue == -1 ?
+                x._rawValue == MIN_VALUE & y._rawValue == -1 ?
                 0 :
-                x.m_rawValue % y.m_rawValue);
+                x._rawValue % y._rawValue);
         }
 
         /// <summary>
@@ -392,57 +391,57 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 FastMod(Fix64 x, Fix64 y)
         {
-            return new Fix64(x.m_rawValue % y.m_rawValue);
+            return new Fix64(x._rawValue % y._rawValue);
         }
 
         public static Fix64 operator -(Fix64 x)
         {
-            return x.m_rawValue == MIN_VALUE ? MaxValue : new Fix64(-x.m_rawValue);
+            return x._rawValue == MIN_VALUE ? MaxValue : new Fix64(-x._rawValue);
         }
 
         public static bool operator ==(Fix64 x, Fix64 y)
         {
-            return x.m_rawValue == y.m_rawValue;
+            return x._rawValue == y._rawValue;
         }
 
         public static bool operator !=(Fix64 x, Fix64 y)
         {
-            return x.m_rawValue != y.m_rawValue;
+            return x._rawValue != y._rawValue;
         }
 
         public static bool operator >(Fix64 x, Fix64 y)
         {
-            return x.m_rawValue > y.m_rawValue;
+            return x._rawValue > y._rawValue;
         }
 
         public static bool operator <(Fix64 x, Fix64 y)
         {
-            return x.m_rawValue < y.m_rawValue;
+            return x._rawValue < y._rawValue;
         }
 
         public static bool operator >=(Fix64 x, Fix64 y)
         {
-            return x.m_rawValue >= y.m_rawValue;
+            return x._rawValue >= y._rawValue;
         }
 
         public static bool operator <=(Fix64 x, Fix64 y)
         {
-            return x.m_rawValue <= y.m_rawValue;
+            return x._rawValue <= y._rawValue;
         }
 
         /// <summary>
         /// Returns 2 raised to the specified power.
         /// Provides at least 6 decimals of accuracy.
         /// </summary>
-        internal static Fix64 Pow2(Fix64 x)
+        public static Fix64 Pow2(Fix64 x)
         {
-            if (x.m_rawValue == 0)
+            if (x._rawValue == 0)
             {
                 return One;
             }
 
             // Avoid negative arguments by exploiting that exp(-x) = 1/exp(x).
-            bool neg = x.m_rawValue < 0;
+            bool neg = x._rawValue < 0;
             if (neg)
             {
                 x = -x;
@@ -470,19 +469,19 @@ namespace FixMath.NET
 
             int integerPart = (int)Floor(x);
             // Take fractional part of exponent
-            x = new Fix64(x.m_rawValue & 0x00000000FFFFFFFF);
+            x = new Fix64(x._rawValue & 0x00000000FFFFFFFF);
 
             var result = One;
             var term = One;
             int i = 1;
-            while (term.m_rawValue != 0)
+            while (term._rawValue != 0)
             {
                 term = FastMul(FastMul(x, term), Ln2) / (Fix64)i;
                 result += term;
                 i++;
             }
 
-            result = FromRaw(result.m_rawValue << integerPart);
+            result = FromRaw(result._rawValue << integerPart);
             if (neg)
             {
                 result = One / result;
@@ -498,11 +497,11 @@ namespace FixMath.NET
         /// <exception cref="ArgumentOutOfRangeException">
         /// The argument was non-positive
         /// </exception>
-        internal static Fix64 Log2(Fix64 x)
+        public static Fix64 Log2(Fix64 x)
         {
-            if (x.m_rawValue <= 0)
+            if (x._rawValue <= 0)
             {
-                throw new ArgumentOutOfRangeException("Non-positive value passed to Ln", "x");
+                throw new ArgumentOutOfRangeException(nameof(x), "Non-positive value passed to Ln");
             }
 
             // This implementation is based on Clay. S. Turner's fast binary logarithm
@@ -512,7 +511,7 @@ namespace FixMath.NET
             long b = 1U << (FRACTIONAL_PLACES - 1);
             long y = 0;
 
-            long rawX = x.m_rawValue;
+            long rawX = x._rawValue;
             while (rawX < ONE)
             {
                 rawX <<= 1;
@@ -530,9 +529,9 @@ namespace FixMath.NET
             for (int i = 0; i < FRACTIONAL_PLACES; i++)
             {
                 z = FastMul(z, z);
-                if (z.m_rawValue >= (ONE << 1))
+                if (z._rawValue >= (ONE << 1))
                 {
-                    z = new Fix64(z.m_rawValue >> 1);
+                    z = new Fix64(z._rawValue >> 1);
                     y += b;
                 }
                 b >>= 1;
@@ -569,13 +568,13 @@ namespace FixMath.NET
             {
                 return One;
             }
-            if (exp.m_rawValue == 0)
+            if (exp._rawValue == 0)
             {
                 return One;
             }
-            if (b.m_rawValue == 0)
+            if (b._rawValue == 0)
             {
-                if (exp.m_rawValue < 0)
+                if (exp._rawValue < 0)
                 {
                     throw new DivideByZeroException();
                 }
@@ -594,12 +593,12 @@ namespace FixMath.NET
         /// </exception>
         public static Fix64 Sqrt(Fix64 x)
         {
-            var xl = x.m_rawValue;
+            var xl = x._rawValue;
             if (xl < 0)
             {
                 // We cannot represent infinities like Single and Double, and Sqrt is
                 // mathematically undefined for x < 0. So we just throw an exception.
-                throw new ArgumentOutOfRangeException("Negative value passed to Sqrt", "x");
+                throw new ArgumentOutOfRangeException(nameof(x), "Negative value passed to Sqrt");
             }
 
             var num = (ulong)xl;
@@ -670,7 +669,7 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 Sin(Fix64 x)
         {
-            var clampedL = ClampSinValue(x.m_rawValue, out var flipHorizontal, out var flipVertical);
+            var clampedL = ClampSinValue(x._rawValue, out var flipHorizontal, out var flipVertical);
             var clamped = new Fix64(clampedL);
 
             // Find the two closest values in the LUT and perform linear interpolation
@@ -686,8 +685,8 @@ namespace FixMath.NET
                 SinLut.Length - 1 - (int)roundedIndex - Sign(indexError) :
                 (int)roundedIndex + Sign(indexError)]);
 
-            var delta = FastMul(indexError, FastAbs(FastSub(nearestValue, secondNearestValue))).m_rawValue;
-            var interpolatedValue = nearestValue.m_rawValue + (flipHorizontal ? -delta : delta);
+            var delta = FastMul(indexError, FastAbs(FastSub(nearestValue, secondNearestValue)))._rawValue;
+            var interpolatedValue = nearestValue._rawValue + (flipHorizontal ? -delta : delta);
             var finalValue = flipVertical ? -interpolatedValue : interpolatedValue;
             return new Fix64(finalValue);
         }
@@ -699,7 +698,7 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 FastSin(Fix64 x)
         {
-            var clampedL = ClampSinValue(x.m_rawValue, out bool flipHorizontal, out bool flipVertical);
+            var clampedL = ClampSinValue(x._rawValue, out bool flipHorizontal, out bool flipVertical);
 
             // Here we use the fact that the SinLut table has a number of entries
             // equal to (PI_OVER_2 >> 15) to use the angle to index directly into it
@@ -760,7 +759,7 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 Cos(Fix64 x)
         {
-            var xl = x.m_rawValue;
+            var xl = x._rawValue;
             var rawAngle = xl + (xl > 0 ? -PI - PI_OVER_2 : PI_OVER_2);
             return Sin(new Fix64(rawAngle));
         }
@@ -771,7 +770,7 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 FastCos(Fix64 x)
         {
-            var xl = x.m_rawValue;
+            var xl = x._rawValue;
             var rawAngle = xl + (xl > 0 ? -PI - PI_OVER_2 : PI_OVER_2);
             return FastSin(new Fix64(rawAngle));
         }
@@ -784,7 +783,7 @@ namespace FixMath.NET
         /// </remarks>
         public static Fix64 Tan(Fix64 x)
         {
-            var clampedPi = x.m_rawValue % PI;
+            var clampedPi = x._rawValue % PI;
             var flip = false;
             if (clampedPi < 0)
             {
@@ -807,8 +806,8 @@ namespace FixMath.NET
             var nearestValue = new Fix64(TanLut[(int)roundedIndex]);
             var secondNearestValue = new Fix64(TanLut[(int)roundedIndex + Sign(indexError)]);
 
-            var delta = FastMul(indexError, FastAbs(FastSub(nearestValue, secondNearestValue))).m_rawValue;
-            var interpolatedValue = nearestValue.m_rawValue + delta;
+            var delta = FastMul(indexError, FastAbs(FastSub(nearestValue, secondNearestValue)))._rawValue;
+            var interpolatedValue = nearestValue._rawValue + delta;
             var finalValue = flip ? -interpolatedValue : interpolatedValue;
             return new Fix64(finalValue);
         }
@@ -824,10 +823,10 @@ namespace FixMath.NET
                 throw new ArgumentOutOfRangeException(nameof(x));
             }
 
-            if (x.m_rawValue == 0) return PiOver2;
+            if (x._rawValue == 0) return PiOver2;
 
             var result = Atan(Sqrt(One - x * x) / x);
-            return x.m_rawValue < 0 ? result + Pi : result;
+            return x._rawValue < 0 ? result + Pi : result;
         }
 
         /// <summary>
@@ -836,11 +835,11 @@ namespace FixMath.NET
         /// </summary>
         public static Fix64 Atan(Fix64 z)
         {
-            if (z.m_rawValue == 0) return Zero;
+            if (z._rawValue == 0) return Zero;
 
             // Force positive values for argument
             // Atan(-z) = -Atan(z).
-            var neg = z.m_rawValue < 0;
+            var neg = z._rawValue < 0;
             if (neg)
             {
                 z = -z;
@@ -871,7 +870,7 @@ namespace FixMath.NET
                 dividend += zSq2;
                 divisor += zSq12;
 
-                if (term.m_rawValue == 0) break;
+                if (term._rawValue == 0) break;
             }
 
             result = result * z / zSqPlusOne;
@@ -890,8 +889,8 @@ namespace FixMath.NET
 
         public static Fix64 Atan2(Fix64 y, Fix64 x)
         {
-            var yl = y.m_rawValue;
-            var xl = x.m_rawValue;
+            var yl = y._rawValue;
+            var xl = x._rawValue;
             if (xl == 0)
             {
                 if (yl > 0)
@@ -944,7 +943,7 @@ namespace FixMath.NET
         }
         public static explicit operator long(Fix64 value)
         {
-            return value.m_rawValue >> FRACTIONAL_PLACES;
+            return value._rawValue >> FRACTIONAL_PLACES;
         }
         public static explicit operator Fix64(float value)
         {
@@ -952,7 +951,7 @@ namespace FixMath.NET
         }
         public static explicit operator float(Fix64 value)
         {
-            return (float)value.m_rawValue / ONE;
+            return (float)value._rawValue / ONE;
         }
         public static explicit operator Fix64(double value)
         {
@@ -960,7 +959,7 @@ namespace FixMath.NET
         }
         public static explicit operator double(Fix64 value)
         {
-            return (double)value.m_rawValue / ONE;
+            return (double)value._rawValue / ONE;
         }
         public static explicit operator Fix64(decimal value)
         {
@@ -968,27 +967,27 @@ namespace FixMath.NET
         }
         public static explicit operator decimal(Fix64 value)
         {
-            return (decimal)value.m_rawValue / ONE;
+            return (decimal)value._rawValue / ONE;
         }
 
         public override bool Equals(object obj)
         {
-            return obj is Fix64 && ((Fix64)obj).m_rawValue == m_rawValue;
+            return obj is Fix64 && ((Fix64)obj)._rawValue == _rawValue;
         }
 
         public override int GetHashCode()
         {
-            return m_rawValue.GetHashCode();
+            return _rawValue.GetHashCode();
         }
 
         public bool Equals(Fix64 other)
         {
-            return m_rawValue == other.m_rawValue;
+            return _rawValue == other._rawValue;
         }
 
         public int CompareTo(Fix64 other)
         {
-            return m_rawValue.CompareTo(other.m_rawValue);
+            return _rawValue.CompareTo(other._rawValue);
         }
 
         public override string ToString()
@@ -1002,85 +1001,45 @@ namespace FixMath.NET
             return new Fix64(rawValue);
         }
 
-        internal static void GenerateSinLut()
+        public static long[] GenerateSinLut()
         {
-            using (var writer = new StreamWriter("Fix64SinLut.cs"))
+            var table = new long[LUT_SIZE];
+
+            for (var i = 0; i < LUT_SIZE; i++)
             {
-                writer.Write(
-@"namespace FixMath.NET 
-{
-    partial struct Fix64 
-    {
-        public static readonly long[] SinLut = new[] 
-        {");
-                int lineCounter = 0;
-                for (int i = 0; i < LUT_SIZE; ++i)
-                {
-                    var angle = i * Math.PI * 0.5 / (LUT_SIZE - 1);
-                    if (lineCounter++ % 8 == 0)
-                    {
-                        writer.WriteLine();
-                        writer.Write("            ");
-                    }
-                    var sin = Math.Sin(angle);
-                    var rawValue = ((Fix64)sin).m_rawValue;
-                    writer.Write(string.Format("0x{0:X}L, ", rawValue));
-                }
-                writer.Write(
-@"
-        };
-    }
-}");
+                var angle = i * Math.PI * 0.5 / (LUT_SIZE - 1);
+                var sin = Math.Sin(angle);
+                var rawValue = ((Fix64)sin).RawValue;
+                
+                table[i] = rawValue;
             }
+
+            return table;
         }
 
-        internal static void GenerateTanLut()
+        public static long[] GenerateTanLut()
         {
-            using (var writer = new StreamWriter("Fix64TanLut.cs"))
-            {
-                writer.Write(
-@"namespace FixMath.NET 
-{
-    partial struct Fix64 
-    {
-        public static readonly long[] TanLut = new[] 
-        {");
-                int lineCounter = 0;
-                for (int i = 0; i < LUT_SIZE; ++i)
-                {
-                    var angle = i * Math.PI * 0.5 / (LUT_SIZE - 1);
-                    if (lineCounter++ % 8 == 0)
-                    {
-                        writer.WriteLine();
-                        writer.Write("            ");
-                    }
-                    var tan = Math.Tan(angle);
-                    if (tan > (double)MaxValue || tan < 0.0)
-                    {
-                        tan = (double)MaxValue;
-                    }
-                    var rawValue = (((decimal)tan > (decimal)MaxValue || tan < 0.0) ? MaxValue : (Fix64)tan).m_rawValue;
-                    writer.Write(string.Format("0x{0:X}L, ", rawValue));
-                }
-                writer.Write(
-@"
-        };
-    }
-}");
-            }
-        }
+            var maxValue = (double)MaxValue;
 
-        // turn into a Console Application and use this to generate the look-up tables
-        //static void Main(string[] args)
-        //{
-        //    GenerateSinLut();
-        //    GenerateTanLut();
-        //}
+            var table = new long[LUT_SIZE];
+
+            for (var i = 0; i < LUT_SIZE; i++)
+            {
+                var angle = i * Math.PI * 0.5 / (LUT_SIZE - 1);
+                var tan = Math.Tan(angle);
+                var fixedNum = tan > maxValue || tan < 0 ? MaxValue : (Fix64)tan;
+                var rawValue = fixedNum.RawValue;
+
+                table[i] = rawValue;
+            }
+
+            return table;
+        }
 
         /// <summary>
         /// The underlying integer representation
         /// </summary>
-        public long RawValue => m_rawValue;
+        public long RawValue => _rawValue;
 
         /// <summary>
         /// This is the constructor from raw value; it can only be used interally.
@@ -1088,12 +1047,12 @@ namespace FixMath.NET
         /// <param name="rawValue"></param>
         Fix64(long rawValue)
         {
-            m_rawValue = rawValue;
+            _rawValue = rawValue;
         }
 
         public Fix64(int value)
         {
-            m_rawValue = value * ONE;
+            _rawValue = value * ONE;
         }
     }
 }

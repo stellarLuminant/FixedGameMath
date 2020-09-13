@@ -1,15 +1,15 @@
-﻿using System;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Xunit;
 
-namespace FixMath.NET
+namespace FixedMath.NET.Tests
 {
+    [TestClass]
     public class Fix64Tests
     {
-
-        long[] m_testCases = new[] {
+        private readonly long[] _testCases = {
             // Small numbers
             0L, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
             -1, -2, -3, -4, -5, -6, -7, -8, -9, -10,
@@ -44,13 +44,13 @@ namespace FixMath.NET
             -376, 435, -311, 116, 715, -1024, -487, 59, 724, 993
         };
 
-        [Fact]
+        [TestMethod]
         public void Precision()
         {
-            Assert.Equal(0.00000000023283064365386962890625m, Fix64.Precision);
+            Assert.AreEqual(0.00000000023283064365386962890625m, Fix64.Precision);
         }
 
-        [Fact]
+        [TestMethod]
         public void LongToFix64AndBack()
         {
             var sources = new[] { long.MinValue, int.MinValue - 1L, int.MinValue, -1L, 0L, 1L, int.MaxValue, int.MaxValue + 1L, long.MaxValue };
@@ -60,24 +60,24 @@ namespace FixMath.NET
                 var expected = expecteds[i];
                 var f = (Fix64)sources[i];
                 var actual = (long)f;
-                Assert.Equal(expected, actual);
+                Assert.AreEqual(expected, actual);
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void DoubleToFix64AndBack()
         {
-            var sources = new[] {
-                (double)int.MinValue,
-                -(double)Math.PI,
-                -(double)Math.E,
+            double[] sources = {
+                int.MinValue,
+                -Math.PI,
+                -Math.E,
                 -1.0,
                 -0.0,
                 0.0,
                 1.0,
-                (double)Math.PI,
-                (double)Math.E,
-                (double)int.MaxValue
+                Math.PI,
+                Math.E,
+                int.MaxValue
             };
 
             foreach (var value in sources)
@@ -88,20 +88,20 @@ namespace FixMath.NET
 
         static void AreEqualWithinPrecision(decimal value1, decimal value2)
         {
-            Assert.True(Math.Abs(value2 - value1) < Fix64.Precision);
+            Assert.IsTrue(Math.Abs(value2 - value1) < Fix64.Precision);
         }
 
         static void AreEqualWithinPrecision(double value1, double value2)
         {
-            Assert.True(Math.Abs(value2 - value1) < (double)Fix64.Precision);
+            Assert.IsTrue(Math.Abs(value2 - value1) < (double)Fix64.Precision);
         }
 
-        [Fact]
+        [TestMethod]
         public void DecimalToFix64AndBack()
         {
 
-            Assert.Equal(Fix64.MaxValue, (Fix64)(decimal)Fix64.MaxValue);
-            Assert.Equal(Fix64.MinValue, (Fix64)(decimal)Fix64.MinValue);
+            Assert.AreEqual(Fix64.MaxValue, (Fix64)(decimal)Fix64.MaxValue);
+            Assert.AreEqual(Fix64.MinValue, (Fix64)(decimal)Fix64.MinValue);
 
             var sources = new[] {
                 int.MinValue,
@@ -122,7 +122,7 @@ namespace FixMath.NET
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void Addition()
         {
             var terms1 = new[] { Fix64.MinValue, (Fix64)(-1), Fix64.Zero, Fix64.One, Fix64.MaxValue };
@@ -132,11 +132,11 @@ namespace FixMath.NET
             {
                 var actual = terms1[i] + terms2[i];
                 var expected = expecteds[i];
-                Assert.Equal(expected, actual);
+                Assert.AreEqual(expected, actual);
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void Subtraction()
         {
             var terms1 = new[] { Fix64.MinValue, (Fix64)(-1), Fix64.Zero, Fix64.One, Fix64.MaxValue };
@@ -146,11 +146,11 @@ namespace FixMath.NET
             {
                 var actual = terms1[i] - terms2[i];
                 var expected = expecteds[i];
-                Assert.Equal(expected, actual);
+                Assert.AreEqual(expected, actual);
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void BasicMultiplication()
         {
             var term1s = new[] { 0m, 1m, -1m, 5m, -5m, 0.5m, -0.5m, -1.0m };
@@ -160,21 +160,21 @@ namespace FixMath.NET
             {
                 var expected = expecteds[i];
                 var actual = (long)((Fix64)term1s[i] * (Fix64)term2s[i]);
-                Assert.Equal(expected, actual);
+                Assert.AreEqual(expected, actual);
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void MultiplicationTestCases()
         {
             var sw = new Stopwatch();
             int failures = 0;
-            for (int i = 0; i < m_testCases.Length; ++i)
+            for (int i = 0; i < _testCases.Length; ++i)
             {
-                for (int j = 0; j < m_testCases.Length; ++j)
+                for (int j = 0; j < _testCases.Length; ++j)
                 {
-                    var x = Fix64.FromRaw(m_testCases[i]);
-                    var y = Fix64.FromRaw(m_testCases[j]);
+                    var x = Fix64.FromRaw(_testCases[i]);
+                    var y = Fix64.FromRaw(_testCases[j]);
                     var xM = (decimal)x;
                     var yM = (decimal)y;
                     var expected = xM * yM;
@@ -192,38 +192,38 @@ namespace FixMath.NET
                     if (Math.Abs(actualM - expected) > maxDelta)
                     {
                         Console.WriteLine("Failed for FromRaw({0}) * FromRaw({1}): expected {2} but got {3}",
-                                          m_testCases[i],
-                                          m_testCases[j],
+                                          _testCases[i],
+                                          _testCases[j],
                                           (Fix64)expected,
                                           actualM);
                         ++failures;
                     }
                 }
             }
-            Console.WriteLine("{0} total, {1} per multiplication", sw.ElapsedMilliseconds, (double)sw.Elapsed.Milliseconds / (m_testCases.Length * m_testCases.Length));
-            Assert.True(failures < 1);
+            Console.WriteLine("{0} total, {1} per multiplication", sw.ElapsedMilliseconds, (double)sw.Elapsed.Milliseconds / (_testCases.Length * _testCases.Length));
+            Assert.IsTrue(failures < 1);
         }
 
 
         static void Ignore<T>(T value) { }
 
-        [Fact]
+        [TestMethod]
         public void DivisionTestCases()
         {
             var sw = new Stopwatch();
             int failures = 0;
-            for (int i = 0; i < m_testCases.Length; ++i)
+            for (int i = 0; i < _testCases.Length; ++i)
             {
-                for (int j = 0; j < m_testCases.Length; ++j)
+                for (int j = 0; j < _testCases.Length; ++j)
                 {
-                    var x = Fix64.FromRaw(m_testCases[i]);
-                    var y = Fix64.FromRaw(m_testCases[j]);
+                    var x = Fix64.FromRaw(_testCases[i]);
+                    var y = Fix64.FromRaw(_testCases[j]);
                     var xM = (decimal)x;
                     var yM = (decimal)y;
 
-                    if (m_testCases[j] == 0)
+                    if (_testCases[j] == 0)
                     {
-                        Assert.Throws<DivideByZeroException>(() => Ignore(x / y));
+                        Assert.ThrowsException<DivideByZeroException>(() => Ignore(x / y));
                     }
                     else
                     {
@@ -242,8 +242,8 @@ namespace FixMath.NET
                         if (Math.Abs(actualM - expected) > maxDelta)
                         {
                             Console.WriteLine("Failed for FromRaw({0}) / FromRaw({1}): expected {2} but got {3}",
-                                              m_testCases[i],
-                                              m_testCases[j],
+                                              _testCases[i],
+                                              _testCases[j],
                                               (Fix64)expected,
                                               actualM);
                             ++failures;
@@ -251,13 +251,13 @@ namespace FixMath.NET
                     }
                 }
             }
-            Console.WriteLine("{0} total, {1} per division", sw.ElapsedMilliseconds, (double)sw.Elapsed.Milliseconds / (m_testCases.Length * m_testCases.Length));
-            Assert.True(failures < 1);
+            Console.WriteLine("{0} total, {1} per division", sw.ElapsedMilliseconds, (double)sw.Elapsed.Milliseconds / (_testCases.Length * _testCases.Length));
+            Assert.IsTrue(failures < 1);
         }
 
 
 
-        [Fact]
+        [TestMethod]
         public void Sign()
         {
             var sources = new[] { Fix64.MinValue, (Fix64)(-1), Fix64.Zero, Fix64.One, Fix64.MaxValue };
@@ -266,39 +266,39 @@ namespace FixMath.NET
             {
                 var actual = Fix64.Sign(sources[i]);
                 var expected = expecteds[i];
-                Assert.Equal(expected, actual);
+                Assert.AreEqual(expected, actual);
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void Abs()
         {
-            Assert.Equal(Fix64.MaxValue, Fix64.Abs(Fix64.MinValue));
+            Assert.AreEqual(Fix64.MaxValue, Fix64.Abs(Fix64.MinValue));
             var sources = new[] { -1, 0, 1, int.MaxValue };
             var expecteds = new[] { 1, 0, 1, int.MaxValue };
             for (int i = 0; i < sources.Length; ++i)
             {
                 var actual = Fix64.Abs((Fix64)sources[i]);
                 var expected = (Fix64)expecteds[i];
-                Assert.Equal(expected, actual);
+                Assert.AreEqual(expected, actual);
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void FastAbs()
         {
-            Assert.Equal(Fix64.MinValue, Fix64.FastAbs(Fix64.MinValue));
+            Assert.AreEqual(Fix64.MinValue, Fix64.FastAbs(Fix64.MinValue));
             var sources = new[] { -1, 0, 1, int.MaxValue };
             var expecteds = new[] { 1, 0, 1, int.MaxValue };
             for (int i = 0; i < sources.Length; ++i)
             {
                 var actual = Fix64.FastAbs((Fix64)sources[i]);
                 var expected = (Fix64)expecteds[i];
-                Assert.Equal(expected, actual);
+                Assert.AreEqual(expected, actual);
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void Floor()
         {
             var sources = new[] { -5.1m, -1, 0, 1, 5.1m };
@@ -307,11 +307,11 @@ namespace FixMath.NET
             {
                 var actual = (decimal)Fix64.Floor((Fix64)sources[i]);
                 var expected = expecteds[i];
-                Assert.Equal(expected, actual);
+                Assert.AreEqual(expected, actual);
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void Ceiling()
         {
             var sources = new[] { -5.1m, -1, 0, 1, 5.1m };
@@ -320,13 +320,13 @@ namespace FixMath.NET
             {
                 var actual = (decimal)Fix64.Ceiling((Fix64)sources[i]);
                 var expected = expecteds[i];
-                Assert.Equal(expected, actual);
+                Assert.AreEqual(expected, actual);
             }
 
-            Assert.Equal(Fix64.MaxValue, Fix64.Ceiling(Fix64.MaxValue));
+            Assert.AreEqual(Fix64.MaxValue, Fix64.Ceiling(Fix64.MaxValue));
         }
 
-        [Fact]
+        [TestMethod]
         public void Round()
         {
             var sources = new[] { -5.5m, -5.1m, -4.5m, -4.4m, -1, 0, 1, 4.5m, 4.6m, 5.4m, 5.5m };
@@ -335,44 +335,44 @@ namespace FixMath.NET
             {
                 var actual = (decimal)Fix64.Round((Fix64)sources[i]);
                 var expected = expecteds[i];
-                Assert.Equal(expected, actual);
+                Assert.AreEqual(expected, actual);
             }
-            Assert.Equal(Fix64.MaxValue, Fix64.Round(Fix64.MaxValue));
+            Assert.AreEqual(Fix64.MaxValue, Fix64.Round(Fix64.MaxValue));
         }
 
 
-        [Fact]
+        [TestMethod]
         public void Sqrt()
         {
-            for (int i = 0; i < m_testCases.Length; ++i)
+            for (int i = 0; i < _testCases.Length; ++i)
             {
-                var f = Fix64.FromRaw(m_testCases[i]);
+                var f = Fix64.FromRaw(_testCases[i]);
                 if (Fix64.Sign(f) < 0)
                 {
-                    Assert.Throws<ArgumentOutOfRangeException>(() => Fix64.Sqrt(f));
+                    Assert.ThrowsException<ArgumentOutOfRangeException>(() => Fix64.Sqrt(f));
                 }
                 else
                 {
                     var expected = Math.Sqrt((double)f);
                     var actual = (double)Fix64.Sqrt(f);
                     var delta = (decimal)Math.Abs(expected - actual);
-                    Assert.True(delta <= Fix64.Precision);
+                    Assert.IsTrue(delta <= Fix64.Precision);
                 }
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void Log2()
         {
             double maxDelta = (double)(Fix64.Precision * 4);
 
-            for (int j = 0; j < m_testCases.Length; ++j)
+            for (int j = 0; j < _testCases.Length; ++j)
             {
-                var b = Fix64.FromRaw(m_testCases[j]);
+                var b = Fix64.FromRaw(_testCases[j]);
 
                 if (b <= Fix64.Zero)
                 {
-                    Assert.Throws<ArgumentOutOfRangeException>(() => Fix64.Log2(b));
+                    Assert.ThrowsException<ArgumentOutOfRangeException>(() => Fix64.Log2(b));
                 }
                 else
                 {
@@ -380,23 +380,23 @@ namespace FixMath.NET
                     var actual = (double)Fix64.Log2(b);
                     var delta = Math.Abs(expected - actual);
 
-                    Assert.True(delta <= maxDelta, string.Format("Ln({0}) = expected {1} but got {2}", b, expected, actual));
+                    Assert.IsTrue(delta <= maxDelta, string.Format("Ln({0}) = expected {1} but got {2}", b, expected, actual));
                 }
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void Ln()
         {
             double maxDelta = 0.00000001;
 
-            for (int j = 0; j < m_testCases.Length; ++j)
+            for (int j = 0; j < _testCases.Length; ++j)
             {
-                var b = Fix64.FromRaw(m_testCases[j]);
+                var b = Fix64.FromRaw(_testCases[j]);
 
                 if (b <= Fix64.Zero)
                 {
-                    Assert.Throws<ArgumentOutOfRangeException>(() => Fix64.Ln(b));
+                    Assert.ThrowsException<ArgumentOutOfRangeException>(() => Fix64.Ln(b));
                 }
                 else
                 {
@@ -404,45 +404,45 @@ namespace FixMath.NET
                     var actual = (double)Fix64.Ln(b);
                     var delta = Math.Abs(expected - actual);
 
-                    Assert.True(delta <= maxDelta, string.Format("Ln({0}) = expected {1} but got {2}", b, expected, actual));
+                    Assert.IsTrue(delta <= maxDelta, string.Format("Ln({0}) = expected {1} but got {2}", b, expected, actual));
                 }
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void Pow2()
         {
             double maxDelta = 0.0000001;
-            for (int i = 0; i < m_testCases.Length; ++i)
+            for (int i = 0; i < _testCases.Length; ++i)
             {
-                var e = Fix64.FromRaw(m_testCases[i]);
+                var e = Fix64.FromRaw(_testCases[i]);
 
                 var expected = Math.Min(Math.Pow(2, (double)e), (double)Fix64.MaxValue);
                 var actual = (double)Fix64.Pow2(e);
                 var delta = Math.Abs(expected - actual);
 
-                Assert.True(delta <= maxDelta, string.Format("Pow2({0}) = expected {1} but got {2}", e, expected, actual));
+                Assert.IsTrue(delta <= maxDelta, string.Format("Pow2({0}) = expected {1} but got {2}", e, expected, actual));
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void Pow()
         {
-            for (int i = 0; i < m_testCases.Length; ++i)
+            for (int i = 0; i < _testCases.Length; ++i)
             {
-                var b = Fix64.FromRaw(m_testCases[i]);
+                var b = Fix64.FromRaw(_testCases[i]);
 
-                for (int j = 0; j < m_testCases.Length; ++j)
+                for (int j = 0; j < _testCases.Length; ++j)
                 {
-                    var e = Fix64.FromRaw(m_testCases[j]);
+                    var e = Fix64.FromRaw(_testCases[j]);
 
                     if (b == Fix64.Zero && e < Fix64.Zero)
                     {
-                        Assert.Throws<DivideByZeroException>(() => Fix64.Pow(b, e));
+                        Assert.ThrowsException<DivideByZeroException>(() => Fix64.Pow(b, e));
                     }
                     else if (b < Fix64.Zero && e != Fix64.Zero)
                     {
-                        Assert.Throws<ArgumentOutOfRangeException>(() => Fix64.Pow(b, e));
+                        Assert.ThrowsException<ArgumentOutOfRangeException>(() => Fix64.Pow(b, e));
                     }
                     else
                     {
@@ -455,26 +455,26 @@ namespace FixMath.NET
                         var actual = (double)Fix64.Pow(b, e);
                         var delta = Math.Abs(expected - actual);
 
-                        Assert.True(delta <= maxDelta, string.Format("Pow({0}, {1}) = expected {2} but got {3}", b, e, expected, actual));
+                        Assert.IsTrue(delta <= maxDelta, string.Format("Pow({0}, {1}) = expected {2} but got {3}", b, e, expected, actual));
                     }
                 }
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void Modulus()
         {
             var deltas = new List<decimal>();
-            foreach (var operand1 in m_testCases)
+            foreach (var operand1 in _testCases)
             {
-                foreach (var operand2 in m_testCases)
+                foreach (var operand2 in _testCases)
                 {
                     var f1 = Fix64.FromRaw(operand1);
                     var f2 = Fix64.FromRaw(operand2);
 
                     if (operand2 == 0)
                     {
-                        Assert.Throws<DivideByZeroException>(() => Ignore(f1 / f2));
+                        Assert.ThrowsException<DivideByZeroException>(() => Ignore(f1 / f2));
                     }
                     else
                     {
@@ -484,7 +484,7 @@ namespace FixMath.NET
                         var expected = d1 % d2;
                         var delta = Math.Abs(expected - actual);
                         deltas.Add(delta);
-                        Assert.True(delta <= 60 * Fix64.Precision, string.Format("{0} % {1} = expected {2} but got {3}", f1, f2, expected, actual));
+                        Assert.IsTrue(delta <= 60 * Fix64.Precision, string.Format("{0} % {1} = expected {2} but got {3}", f1, f2, expected, actual));
                     }
                 }
             }
@@ -493,7 +493,7 @@ namespace FixMath.NET
             Console.WriteLine("failed: {0}%", deltas.Count(d => d > Fix64.Precision) * 100.0 / deltas.Count);
         }
 
-        //[Fact]
+        //[TestMethod]
         //public void SinBenchmark()
         //{
         //    var deltas = new List<double>();
@@ -521,20 +521,20 @@ namespace FixMath.NET
         //    Console.WriteLine("Fix64.Sin time = {0}ms, Math.Sin time = {1}ms", swf.ElapsedMilliseconds, swd.ElapsedMilliseconds);
         //}
 
-        [Fact]
+        [TestMethod]
         public void Sin()
         {
-            Assert.True(Fix64.Sin(Fix64.Zero) == Fix64.Zero);
+            Assert.IsTrue(Fix64.Sin(Fix64.Zero) == Fix64.Zero);
 
-            Assert.True(Fix64.Sin(Fix64.PiOver2) == Fix64.One);
-            Assert.True(Fix64.Sin(Fix64.Pi) == Fix64.Zero);
-            Assert.True(Fix64.Sin(Fix64.Pi + Fix64.PiOver2) == -Fix64.One);
-            Assert.True(Fix64.Sin(Fix64.PiTimes2) == Fix64.Zero);
+            Assert.IsTrue(Fix64.Sin(Fix64.PiOver2) == Fix64.One);
+            Assert.IsTrue(Fix64.Sin(Fix64.Pi) == Fix64.Zero);
+            Assert.IsTrue(Fix64.Sin(Fix64.Pi + Fix64.PiOver2) == -Fix64.One);
+            Assert.IsTrue(Fix64.Sin(Fix64.PiTimes2) == Fix64.Zero);
 
-            Assert.True(Fix64.Sin(-Fix64.PiOver2) == -Fix64.One);
-            Assert.True(Fix64.Sin(-Fix64.Pi) == Fix64.Zero);
-            Assert.True(Fix64.Sin(-Fix64.Pi - Fix64.PiOver2) == Fix64.One);
-            Assert.True(Fix64.Sin(-Fix64.PiTimes2) == Fix64.Zero);
+            Assert.IsTrue(Fix64.Sin(-Fix64.PiOver2) == -Fix64.One);
+            Assert.IsTrue(Fix64.Sin(-Fix64.Pi) == Fix64.Zero);
+            Assert.IsTrue(Fix64.Sin(-Fix64.Pi - Fix64.PiOver2) == Fix64.One);
+            Assert.IsTrue(Fix64.Sin(-Fix64.PiTimes2) == Fix64.Zero);
 
 
             for (double angle = -2 * Math.PI; angle <= 2 * Math.PI; angle += 0.0001)
@@ -543,21 +543,21 @@ namespace FixMath.NET
                 var actualF = Fix64.Sin(f);
                 var expected = (decimal)Math.Sin(angle);
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.True(delta <= 3 * Fix64.Precision, string.Format("Sin({0}): expected {1} but got {2}", angle, expected, actualF));
+                Assert.IsTrue(delta <= 3 * Fix64.Precision, string.Format("Sin({0}): expected {1} but got {2}", angle, expected, actualF));
             }
 
             var deltas = new List<decimal>();
-            foreach (var val in m_testCases)
+            foreach (var val in _testCases)
             {
                 var f = Fix64.FromRaw(val);
                 var actualF = Fix64.Sin(f);
                 var expected = (decimal)Math.Sin((double)f);
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.True(delta <= 0.0000001M, string.Format("Sin({0}): expected {1} but got {2}", f, expected, actualF));
+                Assert.IsTrue(delta <= 0.0000001M, string.Format("Sin({0}): expected {1} but got {2}", f, expected, actualF));
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void FastSin()
         {
             for (double angle = -2 * Math.PI; angle <= 2 * Math.PI; angle += 0.0001)
@@ -566,28 +566,28 @@ namespace FixMath.NET
                 var actualF = Fix64.FastSin(f);
                 var expected = (decimal)Math.Sin(angle);
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.True(delta <= 50000 * Fix64.Precision, string.Format("Sin({0}): expected {1} but got {2}", angle, expected, actualF));
+                Assert.IsTrue(delta <= 50000 * Fix64.Precision, string.Format("Sin({0}): expected {1} but got {2}", angle, expected, actualF));
             }
 
-            foreach (var val in m_testCases)
+            foreach (var val in _testCases)
             {
                 var f = Fix64.FromRaw(val);
                 var actualF = Fix64.FastSin(f);
                 var expected = (decimal)Math.Sin((double)f);
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.True(delta <= 0.01M, string.Format("Sin({0}): expected {1} but got {2}", f, expected, actualF));
+                Assert.IsTrue(delta <= 0.01M, string.Format("Sin({0}): expected {1} but got {2}", f, expected, actualF));
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void Acos()
         {
             var maxDelta = 0.00000001m;
             var deltas = new List<decimal>();
 
-            Assert.Equal(Fix64.Zero, Fix64.Acos(Fix64.One));
-            Assert.Equal(Fix64.PiOver2, Fix64.Acos(Fix64.Zero));
-            Assert.Equal(Fix64.Pi, Fix64.Acos(-Fix64.One));
+            Assert.AreEqual(Fix64.Zero, Fix64.Acos(Fix64.One));
+            Assert.AreEqual(Fix64.PiOver2, Fix64.Acos(Fix64.Zero));
+            Assert.AreEqual(Fix64.Pi, Fix64.Acos(-Fix64.One));
 
             // Precision
             for (var x = -1.0; x < 1.0; x += 0.001)
@@ -597,16 +597,16 @@ namespace FixMath.NET
                 var expected = (decimal)Math.Acos((double)xf);
                 var delta = Math.Abs(actual - expected);
                 deltas.Add(delta);
-                Assert.True(delta <= maxDelta, string.Format("Precision: Acos({0}): expected {1} but got {2}", xf, expected, actual));
+                Assert.IsTrue(delta <= maxDelta, string.Format("Precision: Acos({0}): expected {1} but got {2}", xf, expected, actual));
             }
 
-            for (int i = 0; i < m_testCases.Length; ++i)
+            for (int i = 0; i < _testCases.Length; ++i)
             {
-                var b = Fix64.FromRaw(m_testCases[i]);
+                var b = Fix64.FromRaw(_testCases[i]);
 
                 if (b < -Fix64.One || b > Fix64.One)
                 {
-                    Assert.Throws<ArgumentOutOfRangeException>(() => Fix64.Acos(b));
+                    Assert.ThrowsException<ArgumentOutOfRangeException>(() => Fix64.Acos(b));
                 }
                 else
                 {
@@ -614,27 +614,27 @@ namespace FixMath.NET
                     var actual = (decimal)Fix64.Acos(b);
                     var delta = Math.Abs(expected - actual);
                     deltas.Add(delta);
-                    Assert.True(delta <= maxDelta, string.Format("Acos({0}) = expected {1} but got {2}", b, expected, actual));
+                    Assert.IsTrue(delta <= maxDelta, string.Format("Acos({0}) = expected {1} but got {2}", b, expected, actual));
                 }
             }
             Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.Precision);
             Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.Precision);
         }
 
-        [Fact]
+        [TestMethod]
         public void Cos()
         {
-            Assert.True(Fix64.Cos(Fix64.Zero) == Fix64.One);
+            Assert.IsTrue(Fix64.Cos(Fix64.Zero) == Fix64.One);
 
-            Assert.True(Fix64.Cos(Fix64.PiOver2) == Fix64.Zero);
-            Assert.True(Fix64.Cos(Fix64.Pi) == -Fix64.One);
-            Assert.True(Fix64.Cos(Fix64.Pi + Fix64.PiOver2) == Fix64.Zero);
-            Assert.True(Fix64.Cos(Fix64.PiTimes2) == Fix64.One);
+            Assert.IsTrue(Fix64.Cos(Fix64.PiOver2) == Fix64.Zero);
+            Assert.IsTrue(Fix64.Cos(Fix64.Pi) == -Fix64.One);
+            Assert.IsTrue(Fix64.Cos(Fix64.Pi + Fix64.PiOver2) == Fix64.Zero);
+            Assert.IsTrue(Fix64.Cos(Fix64.PiTimes2) == Fix64.One);
 
-            Assert.True(Fix64.Cos(-Fix64.PiOver2) == -Fix64.Zero);
-            Assert.True(Fix64.Cos(-Fix64.Pi) == -Fix64.One);
-            Assert.True(Fix64.Cos(-Fix64.Pi - Fix64.PiOver2) == Fix64.Zero);
-            Assert.True(Fix64.Cos(-Fix64.PiTimes2) == Fix64.One);
+            Assert.IsTrue(Fix64.Cos(-Fix64.PiOver2) == -Fix64.Zero);
+            Assert.IsTrue(Fix64.Cos(-Fix64.Pi) == -Fix64.One);
+            Assert.IsTrue(Fix64.Cos(-Fix64.Pi - Fix64.PiOver2) == Fix64.Zero);
+            Assert.IsTrue(Fix64.Cos(-Fix64.PiTimes2) == Fix64.One);
 
 
             for (double angle = -2 * Math.PI; angle <= 2 * Math.PI; angle += 0.0001)
@@ -643,20 +643,20 @@ namespace FixMath.NET
                 var actualF = Fix64.Cos(f);
                 var expected = (decimal)Math.Cos(angle);
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.True(delta <= 3 * Fix64.Precision, string.Format("Cos({0}): expected {1} but got {2}", angle, expected, actualF));
+                Assert.IsTrue(delta <= 3 * Fix64.Precision, string.Format("Cos({0}): expected {1} but got {2}", angle, expected, actualF));
             }
 
-            foreach (var val in m_testCases)
+            foreach (var val in _testCases)
             {
                 var f = Fix64.FromRaw(val);
                 var actualF = Fix64.Cos(f);
                 var expected = (decimal)Math.Cos((double)f);
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.True(delta <= 0.0000001M, string.Format("Cos({0}): expected {1} but got {2}", f, expected, actualF));
+                Assert.IsTrue(delta <= 0.0000001M, string.Format("Cos({0}): expected {1} but got {2}", f, expected, actualF));
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void FastCos()
         {
             for (double angle = -2 * Math.PI; angle <= 2 * Math.PI; angle += 0.0001)
@@ -665,37 +665,37 @@ namespace FixMath.NET
                 var actualF = Fix64.FastCos(f);
                 var expected = (decimal)Math.Cos(angle);
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.True(delta <= 50000 * Fix64.Precision, string.Format("Cos({0}): expected {1} but got {2}", angle, expected, actualF));
+                Assert.IsTrue(delta <= 50000 * Fix64.Precision, string.Format("Cos({0}): expected {1} but got {2}", angle, expected, actualF));
             }
 
-            foreach (var val in m_testCases)
+            foreach (var val in _testCases)
             {
                 var f = Fix64.FromRaw(val);
                 var actualF = Fix64.FastCos(f);
                 var expected = (decimal)Math.Cos((double)f);
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.True(delta <= 0.01M, string.Format("Cos({0}): expected {1} but got {2}", f, expected, actualF));
+                Assert.IsTrue(delta <= 0.01M, string.Format("Cos({0}): expected {1} but got {2}", f, expected, actualF));
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void Tan()
         {
-            Assert.True(Fix64.Tan(Fix64.Zero) == Fix64.Zero);
-            Assert.True(Fix64.Tan(Fix64.Pi) == Fix64.Zero);
-            Assert.True(Fix64.Tan(-Fix64.Pi) == Fix64.Zero);
+            Assert.IsTrue(Fix64.Tan(Fix64.Zero) == Fix64.Zero);
+            Assert.IsTrue(Fix64.Tan(Fix64.Pi) == Fix64.Zero);
+            Assert.IsTrue(Fix64.Tan(-Fix64.Pi) == Fix64.Zero);
 
-            Assert.True(Fix64.Tan(Fix64.PiOver2 - (Fix64)0.001) > Fix64.Zero);
-            Assert.True(Fix64.Tan(Fix64.PiOver2 + (Fix64)0.001) < Fix64.Zero);
-            Assert.True(Fix64.Tan(-Fix64.PiOver2 - (Fix64)0.001) > Fix64.Zero);
-            Assert.True(Fix64.Tan(-Fix64.PiOver2 + (Fix64)0.001) < Fix64.Zero);
+            Assert.IsTrue(Fix64.Tan(Fix64.PiOver2 - (Fix64)0.001) > Fix64.Zero);
+            Assert.IsTrue(Fix64.Tan(Fix64.PiOver2 + (Fix64)0.001) < Fix64.Zero);
+            Assert.IsTrue(Fix64.Tan(-Fix64.PiOver2 - (Fix64)0.001) > Fix64.Zero);
+            Assert.IsTrue(Fix64.Tan(-Fix64.PiOver2 + (Fix64)0.001) < Fix64.Zero);
 
             for (double angle = 0;/*-2 * Math.PI;*/ angle <= 2 * Math.PI; angle += 0.0001)
             {
                 var f = (Fix64)angle;
                 var actualF = Fix64.Tan(f);
                 var expected = (decimal)Math.Tan(angle);
-                Assert.Equal(actualF > Fix64.Zero, expected > 0);
+                Assert.AreEqual(actualF > Fix64.Zero, expected > 0);
                 //TODO figure out a real way to test this function
             }
 
@@ -704,17 +704,17 @@ namespace FixMath.NET
             //    var actualF = Fix64.Tan(f);
             //    var expected = (decimal)Math.Tan((double)f);
             //    var delta = Math.Abs(expected - (decimal)actualF);
-            //    Assert.True(delta <= 0.01, string.Format("Tan({0}): expected {1} but got {2}", f, expected, actualF));
+            //    Assert.IsTrue(delta <= 0.01, string.Format("Tan({0}): expected {1} but got {2}", f, expected, actualF));
             //}
         }
 
-        [Fact]
+        [TestMethod]
         public void Atan()
         {
             var maxDelta = 0.00000001m;
             var deltas = new List<decimal>();
 
-            Assert.Equal(Fix64.Zero, Fix64.Atan(Fix64.Zero));
+            Assert.AreEqual(Fix64.Zero, Fix64.Atan(Fix64.Zero));
 
             // Precision
             for (var x = -1.0; x < 1.0; x += 0.0001)
@@ -724,23 +724,23 @@ namespace FixMath.NET
                 var expected = (decimal)Math.Atan((double)xf);
                 var delta = Math.Abs(actual - expected);
                 deltas.Add(delta);
-                Assert.True(delta <= maxDelta, string.Format("Precision: Atan({0}): expected {1} but got {2}", xf, expected, actual));
+                Assert.IsTrue(delta <= maxDelta, string.Format("Precision: Atan({0}): expected {1} but got {2}", xf, expected, actual));
             }
 
             // Scalability and edge cases
-            foreach (var x in m_testCases)
+            foreach (var x in _testCases)
             {
                 var xf = (Fix64)x;
                 var actual = (decimal)Fix64.Atan(xf);
                 var expected = (decimal)Math.Atan((double)xf);
                 var delta = Math.Abs(actual - expected);
                 deltas.Add(delta);
-                Assert.True(delta <= maxDelta, string.Format("Scalability: Atan({0}): expected {1} but got {2}", xf, expected, actual));
+                Assert.IsTrue(delta <= maxDelta, string.Format("Scalability: Atan({0}): expected {1} but got {2}", xf, expected, actual));
             }
             Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.Precision);
             Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.Precision);
         }
-        //[Fact]
+        //[TestMethod]
         public void AtanBenchmark()
         {
             var deltas = new List<decimal>();
@@ -767,16 +767,16 @@ namespace FixMath.NET
             Console.WriteLine("Fix64.Atan time = {0}ms, Math.Atan time = {1}ms", swf.ElapsedMilliseconds, swd.ElapsedMilliseconds);
         }
 
-        [Fact]
+        [TestMethod]
         public void Atan2()
         {
             var deltas = new List<decimal>();
             // Identities
-            Assert.Equal(Fix64.Atan2(Fix64.Zero, -Fix64.One), Fix64.Pi);
-            Assert.Equal(Fix64.Atan2(Fix64.Zero, Fix64.Zero), Fix64.Zero);
-            Assert.Equal(Fix64.Atan2(Fix64.Zero, Fix64.One), Fix64.Zero);
-            Assert.Equal(Fix64.Atan2(Fix64.One, Fix64.Zero), Fix64.PiOver2);
-            Assert.Equal(Fix64.Atan2(-Fix64.One, Fix64.Zero), -Fix64.PiOver2);
+            Assert.AreEqual(Fix64.Atan2(Fix64.Zero, -Fix64.One), Fix64.Pi);
+            Assert.AreEqual(Fix64.Atan2(Fix64.Zero, Fix64.Zero), Fix64.Zero);
+            Assert.AreEqual(Fix64.Atan2(Fix64.Zero, Fix64.One), Fix64.Zero);
+            Assert.AreEqual(Fix64.Atan2(Fix64.One, Fix64.Zero), Fix64.PiOver2);
+            Assert.AreEqual(Fix64.Atan2(-Fix64.One, Fix64.Zero), -Fix64.PiOver2);
 
             // Precision
             for (var y = -1.0; y < 1.0; y += 0.01)
@@ -789,14 +789,14 @@ namespace FixMath.NET
                     var expected = (decimal)Math.Atan2((double)yf, (double)xf);
                     var delta = Math.Abs((decimal)actual - expected);
                     deltas.Add(delta);
-                    Assert.True(delta <= 0.005M, string.Format("Precision: Atan2({0}, {1}): expected {2} but got {3}", yf, xf, expected, actual));
+                    Assert.IsTrue(delta <= 0.005M, string.Format("Precision: Atan2({0}, {1}): expected {2} but got {3}", yf, xf, expected, actual));
                 }
             }
 
             // Scalability and edge cases
-            foreach (var y in m_testCases)
+            foreach (var y in _testCases)
             {
-                foreach (var x in m_testCases)
+                foreach (var x in _testCases)
                 {
                     var yf = (Fix64)y;
                     var xf = (Fix64)x;
@@ -804,7 +804,7 @@ namespace FixMath.NET
                     var expected = (decimal)Math.Atan2((double)yf, (double)xf);
                     var delta = Math.Abs(actual - expected);
                     deltas.Add(delta);
-                    Assert.True(delta <= 0.005M, string.Format("Scalability: Atan2({0}, {1}): expected {2} but got {3}", yf, xf, expected, actual));
+                    Assert.IsTrue(delta <= 0.005M, string.Format("Scalability: Atan2({0}, {1}): expected {2} but got {3}", yf, xf, expected, actual));
                 }
             }
             Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.Precision);
@@ -812,7 +812,7 @@ namespace FixMath.NET
         }
 
 
-        //[Fact]
+        //[TestMethod]
         public void Atan2Benchmark()
         {
             var deltas = new List<decimal>();
@@ -820,9 +820,9 @@ namespace FixMath.NET
             var swf = new Stopwatch();
             var swd = new Stopwatch();
 
-            foreach (var y in m_testCases)
+            foreach (var y in _testCases)
             {
-                foreach (var x in m_testCases)
+                foreach (var x in _testCases)
                 {
                     for (int k = 0; k < 1000; ++k)
                     {
@@ -843,64 +843,64 @@ namespace FixMath.NET
             Console.WriteLine("Fix64.Atan2 time = {0}ms, Math.Atan2 time = {1}ms", swf.ElapsedMilliseconds, swd.ElapsedMilliseconds);
         }
 
-        [Fact]
+        [TestMethod]
         public void Negation()
         {
-            foreach (var operand1 in m_testCases)
+            foreach (var operand1 in _testCases)
             {
                 var f = Fix64.FromRaw(operand1);
                 if (f == Fix64.MinValue)
                 {
-                    Assert.Equal(-f, Fix64.MaxValue);
+                    Assert.AreEqual(-f, Fix64.MaxValue);
                 }
                 else
                 {
                     var expected = -((decimal)f);
                     var actual = (decimal)(-f);
-                    Assert.Equal(expected, actual);
+                    Assert.AreEqual(expected, actual);
                 }
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void EqualsTests()
         {
-            foreach (var op1 in m_testCases)
+            foreach (var op1 in _testCases)
             {
-                foreach (var op2 in m_testCases)
+                foreach (var op2 in _testCases)
                 {
                     var d1 = (decimal)op1;
                     var d2 = (decimal)op2;
-                    Assert.True(op1.Equals(op2) == d1.Equals(d2));
+                    Assert.IsTrue(op1.Equals(op2) == d1.Equals(d2));
                 }
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void EqualityAndInequalityOperators()
         {
-            var sources = m_testCases.Select(Fix64.FromRaw).ToList();
+            var sources = _testCases.Select(Fix64.FromRaw).ToList();
             foreach (var op1 in sources)
             {
                 foreach (var op2 in sources)
                 {
                     var d1 = (double)op1;
                     var d2 = (double)op2;
-                    Assert.True((op1 == op2) == (d1 == d2));
-                    Assert.True((op1 != op2) == (d1 != d2));
-                    Assert.False((op1 == op2) && (op1 != op2));
+                    Assert.IsTrue((op1 == op2) == (d1 == d2));
+                    Assert.IsTrue((op1 != op2) == (d1 != d2));
+                    Assert.IsFalse((op1 == op2) && (op1 != op2));
                 }
             }
         }
 
-        [Fact]
+        [TestMethod]
         public void CompareTo()
         {
-            var nums = m_testCases.Select(Fix64.FromRaw).ToArray();
+            var nums = _testCases.Select(Fix64.FromRaw).ToArray();
             var numsDecimal = nums.Select(t => (decimal)t).ToArray();
             Array.Sort(nums);
             Array.Sort(numsDecimal);
-            Assert.True(nums.Select(t => (decimal)t).SequenceEqual(numsDecimal));
+            Assert.IsTrue(nums.Select(t => (decimal)t).SequenceEqual(numsDecimal));
         }
     }
 }
