@@ -10,11 +10,19 @@ namespace FixedMath.NET
     {
         readonly long _rawValue;
 
+        /// <summary>
+        /// Smallest absolute value
+        /// </summary>
+        public static readonly Fix64 PrecisionUnit = new Fix64(1L);
+
         // Precision of this type is 2^-32, that is 2,3283064365386962890625E-10
-        public static readonly decimal Precision = (decimal)(new Fix64(1L));//0.00000000023283064365386962890625m;
+        public static readonly decimal Precision = (decimal)PrecisionUnit;//0.00000000023283064365386962890625m;
         public static readonly Fix64 MaxValue = new Fix64(MAX_VALUE);
         public static readonly Fix64 MinValue = new Fix64(MIN_VALUE);
         public static readonly Fix64 One = new Fix64(ONE);
+        public static readonly Fix64 MinusOne = new Fix64(-ONE);
+        public static readonly Fix64 Two = new Fix64(TWO);
+        public static readonly Fix64 Half = new Fix64(HALF);
         public static readonly Fix64 Zero = new Fix64();
 
         /// <summary>
@@ -36,13 +44,15 @@ namespace FixedMath.NET
         const int NUM_BITS = 64;
         const int FRACTIONAL_PLACES = 32;
         const long ONE = 1L << FRACTIONAL_PLACES;
+        const long TWO = 2L << FRACTIONAL_PLACES;
+        const long HALF = 1L << (FRACTIONAL_PLACES - 1);
         const long PI_TIMES_2 = 0x6487ED511;
         const long PI = 0x3243F6A88;
         const long PI_OVER_2 = 0x1921FB544;
         const long PI_INV = 0x517CC1B7;
         const long PI_OVER_2_INV = 0xA2F9836E;
         const long LN2 = 0xB17217F7;
-        const long LOG2MAX = 0x1F00000000;
+        const long LOG2MAX =  0x1F00000000;
         const long LOG2MIN = -0x2000000000;
         const long E_CONST = 0x2B7E15162;
         const int LUT_SIZE = (int)(PI_OVER_2 >> 15);
@@ -435,9 +445,34 @@ namespace FixedMath.NET
         /// </summary>
         public static Fix64 Pow2(Fix64 x)
         {
+            // Constant inputs to be optimized.
             if (x._rawValue == 0)
             {
                 return One;
+            }
+
+            if (x == One)
+            {
+                return Two;
+            }
+
+            if (x == MinusOne)
+            {
+                return Half;
+            }
+
+            // If the power is greater than 31 (more bits than we can store)
+            // return the highest value we can.
+            if (x >= Log2Max)
+            {
+                return MaxValue;
+            }
+
+            // if the power is lower than -31 (we can store 1 more bit, but by then the decimal doesn't matter)
+            // return the lowest absolute value we can.
+            if (x < Log2Min + One)
+            {
+                return PrecisionUnit;
             }
 
             // Avoid negative arguments by exploiting that exp(-x) = 1/exp(x).
@@ -445,19 +480,6 @@ namespace FixedMath.NET
             if (neg)
             {
                 x = -x;
-            }
-
-            if (x == One)
-            {
-                return neg ? One / (Fix64)2 : (Fix64)2;
-            }
-            if (x >= Log2Max)
-            {
-                return neg ? One / MaxValue : MaxValue;
-            }
-            if (x <= Log2Min)
-            {
-                return neg ? MaxValue : Zero;
             }
 
             /* The algorithm is based on the power series for exp(x):
