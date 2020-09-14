@@ -957,8 +957,6 @@ namespace FixedMath.NET
             return atan;
         }
 
-
-
         public static explicit operator Fix64(long value)
         {
             return new Fix64(value * ONE);
@@ -967,9 +965,15 @@ namespace FixedMath.NET
         {
             return value._rawValue >> FRACTIONAL_PLACES;
         }
+
+        public static explicit operator int(Fix64 value)
+        {
+            return (int)(value._rawValue >> FRACTIONAL_PLACES);
+        }
+
         public static explicit operator Fix64(float value)
         {
-            return new Fix64((long)(value * ONE));
+            return new Fix64(ConvertToRaw(value));
         }
         public static explicit operator float(Fix64 value)
         {
@@ -977,7 +981,7 @@ namespace FixedMath.NET
         }
         public static explicit operator Fix64(double value)
         {
-            return new Fix64((long)(value * ONE));
+            return new Fix64(ConvertToRaw(value));
         }
         public static explicit operator double(Fix64 value)
         {
@@ -985,11 +989,62 @@ namespace FixedMath.NET
         }
         public static explicit operator Fix64(decimal value)
         {
-            return new Fix64((long)(value * ONE));
+            return new Fix64(ConvertToRaw(value));
         }
         public static explicit operator decimal(Fix64 value)
         {
             return (decimal)value._rawValue / ONE;
+        }
+
+        /// <summary>
+        /// Converts floating point values to raw values for Fix64.
+        /// Since floating points have very wide dynamic ranges,
+        /// high/low values beyond the range of Int64 will be
+        /// capped to Int64.MaxValue or Int64.MinValue.
+        /// </summary>
+        static long ConvertToRaw(float value)
+        {
+            var product = value * ONE;
+
+            if (product >= long.MaxValue)
+                return long.MaxValue;
+            if (product <= long.MinValue)
+                return long.MinValue;
+            return (long)product;
+        }
+
+        /// <summary>
+        /// Converts floating point values to raw values for Fix64.
+        /// Since floating points have very wide dynamic ranges,
+        /// high/low values beyond the range of Int64 will be
+        /// capped to Int64.MaxValue or Int64.MinValue.
+        /// </summary>
+        static long ConvertToRaw(double value)
+        {
+            var product = value * ONE;
+
+            if (product >= long.MaxValue)
+                return long.MaxValue;
+            if (product <= long.MinValue)
+                return long.MinValue;
+            return (long)product;
+        }
+
+        /// <summary>
+        /// Converts floating point values to raw values for Fix64.
+        /// Since floating points have very wide dynamic ranges,
+        /// high/low values beyond the range of Int64 will be
+        /// capped to Int64.MaxValue or Int64.MinValue.
+        /// </summary>
+        static long ConvertToRaw(decimal value)
+        {
+            var product = value * ONE;
+
+            if (product >= long.MaxValue)
+                return long.MaxValue;
+            if (product <= long.MinValue)
+                return long.MinValue;
+            return (long)product;
         }
 
         public override bool Equals(object obj)

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.WebSockets;
 
 namespace FixedMath.NET.Tests
 {
@@ -51,75 +52,184 @@ namespace FixedMath.NET.Tests
         }
 
         [TestMethod]
+        public void Equals()
+        {
+            foreach (long testCase in _testCases)
+            {
+                var fixedNum = Fix64.FromRaw(testCase);
+                var identical = Fix64.FromRaw(testCase);
+
+                Assert.IsTrue(fixedNum.Equals(identical));
+            }
+        }
+
+        [TestMethod]
+        public void EqualsInvalid()
+        {
+            object[] testCases =
+            {
+                null,
+                "",
+                "a",
+                "1.20",
+                1,
+                0.24
+            };
+
+            var fixedNum = new Fix64(1);
+            Fix64? nullableFixedNum = null;
+
+            foreach (var testCase in testCases)
+            {
+                Assert.IsFalse(fixedNum.Equals(testCase));
+            }
+
+            Assert.IsFalse(fixedNum.Equals(nullableFixedNum));
+        }
+
+        [TestMethod]
+        public void HashCode()
+        {
+            foreach (long testCase in _testCases)
+            {
+                var expectedHashCode = testCase.GetHashCode();
+                var fixedNum = Fix64.FromRaw(testCase);
+                var hashCode = fixedNum.GetHashCode();
+
+                Assert.AreEqual(expectedHashCode, hashCode);
+            }
+        }
+
+        private readonly int[] _intTestCases =
+        {
+            // Simple values
+            0, 1, -1,
+
+            // Boundary values
+            Int32.MaxValue, Int32.MaxValue - 1, Int32.MinValue, Int32.MinValue + 1,
+
+            // Small values
+            324, -324, 9545, -9545, 16, -16,
+
+            // Big values
+            9784556, -9784556, 1826483, -1826483, 67839374, -67839374
+        };
+
+        [TestMethod]
+        public void IntToFix64AndBack()
+        {
+            foreach (int testCase in _intTestCases)
+            {
+                var fixedNum = new Fix64(testCase);
+                var intNum = (int)fixedNum;
+                var newFixedNum = new Fix64(intNum);
+
+                Assert.AreEqual(fixedNum, newFixedNum);
+            }
+        }
+
+        [TestMethod]
         public void LongToFix64AndBack()
         {
-            var sources = new[] { long.MinValue, int.MinValue - 1L, int.MinValue, -1L, 0L, 1L, int.MaxValue, int.MaxValue + 1L, long.MaxValue };
-            var expecteds = new[] { 0L, int.MaxValue, int.MinValue, -1L, 0L, 1L, int.MaxValue, int.MinValue, -1L };
-            for (int i = 0; i < sources.Length; ++i)
+            foreach (long testCase in _testCases)
             {
-                var expected = expecteds[i];
-                var f = (Fix64)sources[i];
-                var actual = (long)f;
-                Assert.AreEqual(expected, actual);
+                var fixedNum = Fix64.FromRaw(testCase);
+                var longNum = fixedNum.RawValue;
+                var newFixedNum = Fix64.FromRaw(longNum);
+
+                Assert.AreEqual(fixedNum, newFixedNum);
+            }
+        }
+
+        [TestMethod]
+        public void FloatToFix64AndBack()
+        {
+            foreach (long testCase in _testCases)
+            {
+                var fixedNum = Fix64.FromRaw(testCase);
+                var floatNum = (float)fixedNum;
+                var newFixedNum = (Fix64)floatNum;
+
+                // 23 bits of precision in a Single.
+                AreEqualWithinBitPrecision(fixedNum, newFixedNum, 23);
             }
         }
 
         [TestMethod]
         public void DoubleToFix64AndBack()
         {
-            double[] sources = {
-                int.MinValue,
-                -Math.PI,
-                -Math.E,
-                -1.0,
-                -0.0,
-                0.0,
-                1.0,
-                Math.PI,
-                Math.E,
-                int.MaxValue
-            };
-
-            foreach (var value in sources)
+            foreach (long testCase in _testCases)
             {
-                AreEqualWithinPrecision(value, (double)(Fix64)value);
+                var fixedNum = Fix64.FromRaw(testCase);
+                var doubleNum = (double)fixedNum;
+                var newFixedNum = (Fix64)doubleNum;
+
+                // 52 bits of precision in a Double.
+                AreEqualWithinBitPrecision(fixedNum, newFixedNum, 52);
             }
-        }
-
-        static void AreEqualWithinPrecision(decimal value1, decimal value2)
-        {
-            Assert.IsTrue(Math.Abs(value2 - value1) < Fix64.Precision);
-        }
-
-        static void AreEqualWithinPrecision(double value1, double value2)
-        {
-            Assert.IsTrue(Math.Abs(value2 - value1) < (double)Fix64.Precision);
         }
 
         [TestMethod]
         public void DecimalToFix64AndBack()
         {
-
-            Assert.AreEqual(Fix64.MaxValue, (Fix64)(decimal)Fix64.MaxValue);
-            Assert.AreEqual(Fix64.MinValue, (Fix64)(decimal)Fix64.MinValue);
-
-            var sources = new[] {
-                int.MinValue,
-                -(decimal)Math.PI,
-                -(decimal)Math.E,
-                -1.0m,
-                -0.0m,
-                0.0m,
-                1.0m,
-                (decimal)Math.PI,
-                (decimal)Math.E,
-                int.MaxValue
-            };
-
-            foreach (var value in sources)
+            foreach (long testCase in _testCases)
             {
-                AreEqualWithinPrecision(value, (decimal)(Fix64)value);
+                var fixedNum = Fix64.FromRaw(testCase);
+                var decimalNum = (decimal)fixedNum;
+                var newFixedNum = (Fix64)decimalNum;
+
+                // There are more bits in a decimal than a Fix64 so technically it should be lossless.
+                // Decided to still use this method since it's a change in number format.
+                AreEqualWithinBitPrecision(fixedNum, newFixedNum, 64);
             }
+        }
+
+        static void AreEqualWithinBitPrecision(Fix64 original, Fix64 converted, int floatPrecisionBits)
+        {
+            // Counts unused bits in order of most significance to least.
+            // Floating point values usually can't store all 64 bits of precision, so they cut off the least significant part.
+            // In order to see how precise this conversion is, we need to check how many significant bits are being used by the source value itself.
+            // Once a used bit is found, it is considered the first significant bit and all other lower precision bits are considered "used".
+            int unusedBits = 0;
+
+            // Check the sign bit to see if the value is negative
+            // Unused bits from most to least significant are the same bit as the sign bit.
+            var signIsNegative = (original.RawValue & (1L << 63)) != 0;
+
+            // To shift 1 up to the top of a 64 bit int we'd shift up 63 times.
+            // But we want to avoid the sign bit since floats account for that in a separate bit.
+            // So we're shifting up 62 times.
+            for (int bitPos = 62; bitPos >= 0; bitPos--)
+            {
+                var bit = 1L << bitPos;
+                
+                // If the bit is the same as the sign bit (negative is 1)
+                // then it is empty.
+                var bitIsOne = (original.RawValue & bit) != 0;
+                var bitIsEmpty = bitIsOne == signIsNegative;
+
+                if (bitIsEmpty)
+                    unusedBits++;
+                else
+                    break;
+            }
+
+            // largest value below the sign bit
+            // all bits are 1 except for sign bit
+            var largestValue = 0x7FFFFFFFFFFFFFFF;
+
+            // Add the unused bits to the float's precision bits to get how much we should shift down.
+            // If the sum is more than 62 then we have more than enough precision to cover the entire value.
+            var downShift = Math.Min(unusedBits + floatPrecisionBits, 62);
+
+            // Shift down the largest value to make up the largest allowed error between conversion.
+            var precisionRaw = largestValue >> downShift;
+            var precision = Fix64.FromRaw(precisionRaw);
+
+            // Check the values against the newly computed precision.
+            var difference = Fix64.Abs(converted - original);
+
+            Assert.IsTrue(difference <= precision, $"Floating Point Precision Check({original}, {converted}, {floatPrecisionBits}) = expected <{precision} but got {difference}");
         }
 
         [TestMethod]
@@ -501,6 +611,75 @@ namespace FixedMath.NET.Tests
             Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.Precision);
             Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.Precision);
             Console.WriteLine("failed: {0}%", deltas.Count(d => d > Fix64.Precision) * 100.0 / deltas.Count);
+        }
+
+        [TestMethod]
+        public void FastModZeroFailure()
+        {
+            Assert.ThrowsException<DivideByZeroException>(() => Fix64.FastMod(Fix64.One, Fix64.Zero));
+        }
+
+        [TestMethod]
+        public void FastModMinValueFailure()
+        {
+            Assert.ThrowsException<OverflowException>(() => Fix64.FastMod(Fix64.MinValue, -Fix64.PrecisionUnit));
+        }
+
+        [TestMethod]
+        public void FastMod()
+        {
+            int[] testInputs = { 0, -1, 1, int.MaxValue, int.MinValue, -1234, 1234, 1234567, -1234567 };
+            int[] testDivisors = { 1, 2, 4, 8, 16, 32, 64, -2, -4, -8, -16, -32, -64 };
+
+            foreach (var input in testInputs)
+            {
+                var fixedInput = new Fix64(input);
+                foreach (var divisor in testDivisors)
+                {
+                    var fixedDivisor = new Fix64(divisor);
+                    var fixedMod = Fix64.FastMod(fixedInput, fixedDivisor);
+
+                    var expectedMod = input % divisor;
+                    var actualMod = (int)fixedMod;
+
+                    Assert.AreEqual(expectedMod, actualMod);
+                }
+            }
+        }
+
+        [TestMethod]
+        public void FastAdd()
+        {
+            foreach (var inputA in _testCases)
+            {
+                var fixedInputA = Fix64.FromRaw(inputA);
+                foreach (var inputB in _testCases)
+                {
+                    var fixedInputB = Fix64.FromRaw(inputB);
+
+                    var fixedSum = Fix64.FastAdd(fixedInputA, fixedInputB);
+                    
+                    var expectedSum = inputA + inputB;
+
+                    var actualSum = fixedSum.RawValue;
+
+                    Assert.AreEqual(expectedSum, actualSum);
+                }
+            }
+        }
+
+        [TestMethod]
+        public void HasFraction()
+        {
+            foreach (var testCase in _testCases)
+            {
+                var fixedNum = Fix64.FromRaw(testCase);
+
+                var expected = Fix64.Fraction(fixedNum) != Fix64.Zero;
+                var actual = Fix64.HasFraction(fixedNum);
+
+                Assert.AreEqual(expected, actual);
+            }
         }
 
         //[TestMethod]
