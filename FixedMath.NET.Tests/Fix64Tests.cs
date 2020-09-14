@@ -123,6 +123,16 @@ namespace FixedMath.NET.Tests
         }
 
         [TestMethod]
+        public void RawValue()
+        {
+            foreach (long testCase in _testCases)
+            {
+                var fixedNum = Fix64.FromRaw(testCase);
+                Assert.AreEqual(fixedNum.RawValue, testCase);
+            }
+        }
+
+        [TestMethod]
         public void Addition()
         {
             var terms1 = new[] { Fix64.MinValue, (Fix64)(-1), Fix64.Zero, Fix64.One, Fix64.MaxValue };
