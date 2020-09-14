@@ -173,7 +173,7 @@ namespace FixedMath.NET
         }
 
         /// <summary>
-        /// Adds x and y witout performing overflow checking. Should be inlined by the CLR.
+        /// Adds x and y without performing overflow checking. Should be inlined by the CLR.
         /// </summary>
         public static Fix64 FastAdd(Fix64 x, Fix64 y)
         {
@@ -181,7 +181,7 @@ namespace FixedMath.NET
         }
 
         /// <summary>
-        /// Subtracts y from x. Performs saturating substraction, i.e. in case of overflow, 
+        /// Subtracts y from x. Performs saturating subtraction, i.e. in case of overflow, 
         /// rounds to MinValue or MaxValue depending on sign of operands.
         /// </summary>
         public static Fix64 operator -(Fix64 x, Fix64 y)
