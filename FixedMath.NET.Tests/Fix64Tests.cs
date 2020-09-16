@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.WebSockets;
 
 namespace FixedMath.NET.Tests
 {
@@ -679,6 +678,24 @@ namespace FixedMath.NET.Tests
                 var actual = Fix64.HasFraction(fixedNum);
 
                 Assert.AreEqual(expected, actual);
+            }
+        }
+
+        // Test depends on Double conversion working properly.
+        [TestMethod]
+        public void Fraction()
+        {
+            foreach (var testCase in _testCases)
+            {
+                var fixedNum = Fix64.FromRaw(testCase);
+
+                // Get the fraction in decimal, then convert back.
+                var decimalNum = (decimal)fixedNum;
+                var decimalFraction = decimalNum % 1;
+                var expectedFraction = (Fix64)decimalFraction;
+                var actualFraction = Fix64.Fraction(fixedNum);
+
+                AreEqualWithinBitPrecision(actualFraction, expectedFraction, 64);
             }
         }
 

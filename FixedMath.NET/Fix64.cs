@@ -152,7 +152,7 @@ namespace FixedMath.NET
         /// </summary>
         public static Fix64 Fraction(Fix64 value)
         {
-            return new Fix64((long)((ulong)value._rawValue & 0x00000000FFFFFFFFUL));
+            return new Fix64(value._rawValue % ONE);
         }
 
         /// <summary>
