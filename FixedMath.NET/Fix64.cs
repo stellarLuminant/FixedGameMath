@@ -579,7 +579,7 @@ namespace FixedMath.NET
         /// Provides about 5 digits of accuracy for the result.
         /// </summary>
         /// <exception cref="DivideByZeroException">
-        /// The base was zero, with a negative exponent
+        /// The base was zero with a negative exponent
         /// </exception>
         /// <exception cref="ArgumentOutOfRangeException">
         /// The base was negative, with a non-zero exponent
@@ -598,7 +598,7 @@ namespace FixedMath.NET
             {
                 if (exp._rawValue < 0)
                 {
-                    throw new DivideByZeroException();
+                    throw new DivideByZeroException("The base was zero with a negative exponent");
                 }
                 return Zero;
             }
