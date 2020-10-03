@@ -47,7 +47,7 @@ namespace FixedMath.NET.Tests
         [TestMethod]
         public void Precision()
         {
-            Assert.AreEqual(0.00000000023283064365386962890625m, Fix64.Precision);
+            Assert.AreEqual(0.00000000023283064365386962890625m, Fix64.PrecisionDecimal);
         }
 
         [TestMethod]
@@ -475,7 +475,7 @@ namespace FixedMath.NET.Tests
                     var expected = Math.Sqrt((double)f);
                     var actual = (double)Fix64.Sqrt(f);
                     var delta = (decimal)Math.Abs(expected - actual);
-                    Assert.IsTrue(delta <= Fix64.Precision);
+                    Assert.IsTrue(delta <= Fix64.PrecisionDecimal);
                 }
             }
         }
@@ -483,7 +483,7 @@ namespace FixedMath.NET.Tests
         [TestMethod]
         public void Log2()
         {
-            double maxDelta = (double)(Fix64.Precision * 4);
+            double maxDelta = (double)(Fix64.PrecisionDecimal * 4);
 
             for (int j = 0; j < _testCases.Length; ++j)
             {
@@ -603,13 +603,13 @@ namespace FixedMath.NET.Tests
                         var expected = d1 % d2;
                         var delta = Math.Abs(expected - actual);
                         deltas.Add(delta);
-                        Assert.IsTrue(delta <= 60 * Fix64.Precision, string.Format("{0} % {1} = expected {2} but got {3}", f1, f2, expected, actual));
+                        Assert.IsTrue(delta <= 60 * Fix64.PrecisionDecimal, string.Format("{0} % {1} = expected {2} but got {3}", f1, f2, expected, actual));
                     }
                 }
             }
-            Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.Precision);
-            Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.Precision);
-            Console.WriteLine("failed: {0}%", deltas.Count(d => d > Fix64.Precision) * 100.0 / deltas.Count);
+            Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.PrecisionDecimal);
+            Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.PrecisionDecimal);
+            Console.WriteLine("failed: {0}%", deltas.Count(d => d > Fix64.PrecisionDecimal) * 100.0 / deltas.Count);
         }
 
         [TestMethod]
@@ -749,7 +749,7 @@ namespace FixedMath.NET.Tests
                 var actualF = Fix64.Sin(f);
                 var expected = (decimal)Math.Sin(angle);
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.IsTrue(delta <= 3 * Fix64.Precision, string.Format("Sin({0}): expected {1} but got {2}", angle, expected, actualF));
+                Assert.IsTrue(delta <= 3 * Fix64.PrecisionDecimal, string.Format("Sin({0}): expected {1} but got {2}", angle, expected, actualF));
             }
 
             var deltas = new List<decimal>();
@@ -772,7 +772,7 @@ namespace FixedMath.NET.Tests
                 var actualF = Fix64.FastSin(f);
                 var expected = (decimal)Math.Sin(angle);
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.IsTrue(delta <= 50000 * Fix64.Precision, string.Format("Sin({0}): expected {1} but got {2}", angle, expected, actualF));
+                Assert.IsTrue(delta <= 50000 * Fix64.PrecisionDecimal, string.Format("Sin({0}): expected {1} but got {2}", angle, expected, actualF));
             }
 
             foreach (var val in _testCases)
@@ -823,8 +823,8 @@ namespace FixedMath.NET.Tests
                     Assert.IsTrue(delta <= maxDelta, string.Format("Acos({0}) = expected {1} but got {2}", b, expected, actual));
                 }
             }
-            Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.Precision);
-            Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.Precision);
+            Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.PrecisionDecimal);
+            Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.PrecisionDecimal);
         }
 
         [TestMethod]
@@ -849,7 +849,7 @@ namespace FixedMath.NET.Tests
                 var actualF = Fix64.Cos(f);
                 var expected = (decimal)Math.Cos(angle);
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.IsTrue(delta <= 3 * Fix64.Precision, string.Format("Cos({0}): expected {1} but got {2}", angle, expected, actualF));
+                Assert.IsTrue(delta <= 3 * Fix64.PrecisionDecimal, string.Format("Cos({0}): expected {1} but got {2}", angle, expected, actualF));
             }
 
             foreach (var val in _testCases)
@@ -871,7 +871,7 @@ namespace FixedMath.NET.Tests
                 var actualF = Fix64.FastCos(f);
                 var expected = (decimal)Math.Cos(angle);
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.IsTrue(delta <= 50000 * Fix64.Precision, string.Format("Cos({0}): expected {1} but got {2}", angle, expected, actualF));
+                Assert.IsTrue(delta <= 50000 * Fix64.PrecisionDecimal, string.Format("Cos({0}): expected {1} but got {2}", angle, expected, actualF));
             }
 
             foreach (var val in _testCases)
@@ -891,17 +891,24 @@ namespace FixedMath.NET.Tests
             Assert.IsTrue(Fix64.Tan(Fix64.Pi) == Fix64.Zero);
             Assert.IsTrue(Fix64.Tan(-Fix64.Pi) == Fix64.Zero);
 
-            Assert.IsTrue(Fix64.Tan(Fix64.PiOver2 - (Fix64)0.001) > Fix64.Zero);
-            Assert.IsTrue(Fix64.Tan(Fix64.PiOver2 + (Fix64)0.001) < Fix64.Zero);
-            Assert.IsTrue(Fix64.Tan(-Fix64.PiOver2 - (Fix64)0.001) > Fix64.Zero);
-            Assert.IsTrue(Fix64.Tan(-Fix64.PiOver2 + (Fix64)0.001) < Fix64.Zero);
+            Assert.IsTrue(Fix64.Tan(Fix64.PiOver2 - Fix64.PrecisionUnit) > Fix64.Zero);
+            Assert.IsTrue(Fix64.Tan(Fix64.PiOver2 + Fix64.PrecisionUnit) < Fix64.Zero);
+            Assert.IsTrue(Fix64.Tan(-Fix64.PiOver2 - Fix64.PrecisionUnit) > Fix64.Zero);
+            Assert.IsTrue(Fix64.Tan(-Fix64.PiOver2 + Fix64.PrecisionUnit) < Fix64.Zero);
 
-            for (double angle = 0;/*-2 * Math.PI;*/ angle <= 2 * Math.PI; angle += 0.0001)
+            int inputBitPrecision = 15;
+            int expectedFunctionPrecision = 5;
+            double startRange = -Math.PI / 2;
+            double endRange = Math.PI / 2;
+            double increment = Math.Pow(2, -inputBitPrecision);
+            for (double angle = startRange; angle <= endRange; angle += increment)
             {
                 var f = (Fix64)angle;
                 var actualF = Fix64.Tan(f);
-                var expected = (decimal)Math.Tan(angle);
-                Assert.AreEqual(actualF > Fix64.Zero, expected > 0);
+                var expected = (Fix64)Math.Tan(angle);
+
+                AreEqualWithinBitPrecision(actualF, expected, expectedFunctionPrecision);
+                //Assert.AreEqual(actualF > Fix64.Zero, expected > 0);
                 //TODO figure out a real way to test this function
             }
 
@@ -943,8 +950,8 @@ namespace FixedMath.NET.Tests
                 deltas.Add(delta);
                 Assert.IsTrue(delta <= maxDelta, string.Format("Scalability: Atan({0}): expected {1} but got {2}", xf, expected, actual));
             }
-            Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.Precision);
-            Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.Precision);
+            Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.PrecisionDecimal);
+            Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.PrecisionDecimal);
         }
         //[TestMethod]
         public void AtanBenchmark()
@@ -968,8 +975,8 @@ namespace FixedMath.NET.Tests
                     deltas.Add(Math.Abs((decimal)actualF - (decimal)expected));
                 }
             }
-            Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.Precision);
-            Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.Precision);
+            Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.PrecisionDecimal);
+            Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.PrecisionDecimal);
             Console.WriteLine("Fix64.Atan time = {0}ms, Math.Atan time = {1}ms", swf.ElapsedMilliseconds, swd.ElapsedMilliseconds);
         }
 
@@ -1013,8 +1020,8 @@ namespace FixedMath.NET.Tests
                     Assert.IsTrue(delta <= 0.005M, string.Format("Scalability: Atan2({0}, {1}): expected {2} but got {3}", yf, xf, expected, actual));
                 }
             }
-            Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.Precision);
-            Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.Precision);
+            Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.PrecisionDecimal);
+            Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.PrecisionDecimal);
         }
 
 
@@ -1044,8 +1051,8 @@ namespace FixedMath.NET.Tests
                     }
                 }
             }
-            Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.Precision);
-            Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.Precision);
+            Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / Fix64.PrecisionDecimal);
+            Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / Fix64.PrecisionDecimal);
             Console.WriteLine("Fix64.Atan2 time = {0}ms, Math.Atan2 time = {1}ms", swf.ElapsedMilliseconds, swd.ElapsedMilliseconds);
         }
 

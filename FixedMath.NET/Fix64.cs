@@ -11,31 +11,73 @@ namespace FixedMath.NET
         readonly long _rawValue;
 
         /// <summary>
-        /// Smallest absolute value
+        /// Smallest absolute value of this type
         /// </summary>
         public static readonly Fix64 PrecisionUnit = new Fix64(1L);
 
-        // Precision of this type is 2^-32, that is 2,3283064365386962890625E-10
-        public static readonly decimal Precision = (decimal)PrecisionUnit;//0.00000000023283064365386962890625m;
+        /// <summary>
+        /// Smallest absolute value of this type in decimal.
+        /// It is 2^-32, or 0.00000000023283064365386962890625
+        /// </summary>
+        public static readonly decimal PrecisionDecimal = (decimal)PrecisionUnit;
+
+        /// <summary>
+        /// Greatest value of this type
+        /// </summary>
         public static readonly Fix64 MaxValue = new Fix64(MAX_VALUE);
+        
+        /// <summary>
+        /// Lowest value of this type
+        /// </summary>
         public static readonly Fix64 MinValue = new Fix64(MIN_VALUE);
+
         public static readonly Fix64 One = new Fix64(ONE);
         public static readonly Fix64 MinusOne = new Fix64(-ONE);
         public static readonly Fix64 Two = new Fix64(TWO);
+
+        /// <summary>
+        /// 1 / 2 or 0.5
+        /// </summary>
         public static readonly Fix64 Half = new Fix64(HALF);
         public static readonly Fix64 Zero = new Fix64();
 
         /// <summary>
-        /// The value of Pi
+        /// Value of Pi
         /// </summary>
         public static readonly Fix64 Pi = new Fix64(PI);
+
+        /// <summary>
+        /// Equivalent to Pi / 2
+        /// </summary>
         public static readonly Fix64 PiOver2 = new Fix64(PI_OVER_2);
+
+        /// <summary>
+        /// Equivalent to Pi * 2
+        /// </summary>
         public static readonly Fix64 PiTimes2 = new Fix64(PI_TIMES_2);
+
+        /// <summary>
+        /// Equivalent to 1 / Pi
+        /// </summary>
         public static readonly Fix64 PiInv = new Fix64(PI_INV);
+
+        /// <summary>
+        /// Equivalent to 1 / (Pi / 2)
+        /// </summary>
         public static readonly Fix64 PiOver2Inv = new Fix64(PI_OVER_2_INV);
+
+        /// <summary>
+        /// Value of E
+        /// </summary>
         public static readonly Fix64 E = new Fix64(E_CONST);
+
+        // Equal to 31. 2^31 is the largest representable power of two.
         static readonly Fix64 Log2Max = new Fix64(LOG2MAX);
+
+        // Equal to 32. 2^32 is the smallest representable power of 2.
         static readonly Fix64 Log2Min = new Fix64(LOG2MIN);
+
+        // Equivalent to ln(2)
         static readonly Fix64 Ln2 = new Fix64(LN2);
 
         static readonly Fix64 LutInterval = (Fix64)(LUT_SIZE - 1) / PiOver2;
@@ -88,7 +130,7 @@ namespace FixedMath.NET
 
         /// <summary>
         /// Returns the absolute value of a Fix64 number.
-        /// FastAbs(Fix64.MinValue) is undefined.
+        /// FastAbs(Fix64.MinValue) == Fix64.MinValue
         /// </summary>
         public static Fix64 FastAbs(Fix64 value)
         {
@@ -198,7 +240,7 @@ namespace FixedMath.NET
         }
 
         /// <summary>
-        /// Subtracts y from x witout performing overflow checking. Should be inlined by the CLR.
+        /// Subtracts y from x without performing overflow checking. Should be inlined by the CLR.
         /// </summary>
         public static Fix64 FastSub(Fix64 x, Fix64 y)
         {
@@ -213,6 +255,10 @@ namespace FixedMath.NET
             return sum;
         }
 
+        /// <summary>
+        /// Multiplies x and y and uses saturating multiplication,
+        /// using MinValue or MaxValue in case of overflow.
+        /// </summary>
         public static Fix64 operator *(Fix64 x, Fix64 y)
         {
 
@@ -329,6 +375,10 @@ namespace FixedMath.NET
             return result;
         }
 
+        /// <summary>
+        /// Divides x by y using saturating division.
+        /// MinValue and MaxValue are used in case of overflow.
+        /// </summary>
         public static Fix64 operator /(Fix64 x, Fix64 y)
         {
             var xl = x._rawValue;
@@ -404,6 +454,10 @@ namespace FixedMath.NET
             return new Fix64(x._rawValue % y._rawValue);
         }
 
+        /// <summary>
+        /// Negates the current value.
+        /// MinValue is negated to MaxValue.
+        /// </summary>
         public static Fix64 operator -(Fix64 x)
         {
             return x._rawValue == MIN_VALUE ? MaxValue : new Fix64(-x._rawValue);
@@ -442,6 +496,7 @@ namespace FixedMath.NET
         /// <summary>
         /// Returns 2 raised to the specified power.
         /// Provides at least 6 decimals of accuracy.
+        /// Values beyond (-31, 31) will return PrecisionUnit or MaxValue respectively.
         /// </summary>
         public static Fix64 Pow2(Fix64 x)
         {
@@ -517,7 +572,7 @@ namespace FixedMath.NET
         /// Provides at least 9 decimals of accuracy.
         /// </summary>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// The argument was non-positive
+        /// The argument was non-positive.
         /// </exception>
         public static Fix64 Log2(Fix64 x)
         {
@@ -802,6 +857,7 @@ namespace FixedMath.NET
         /// </summary>
         /// <remarks>
         /// This function is not well-tested. It may be wildly inaccurate.
+        /// Current tests indicate a minimum of 5 bits of precision across inputs precise as 15 bits.
         /// </remarks>
         public static Fix64 Tan(Fix64 x)
         {
