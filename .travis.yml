@@ -1,0 +1,22 @@
+language: csharp
+mono: none
+solution: FixedMath.NET.sln
+jobs:
+  include:
+    - os: windows
+      install: 
+        - choco install dotnetcore-sdk --version 3.1.402
+      script:
+        - dotnet restore
+        - dotnet test
+    - os: osx
+      install: 
+        - curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin -Channel 3.1
+      script:
+        - /Users/travis/.dotnet/dotnet restore
+        - /Users/travis/.dotnet/dotnet test
+    - os: linux
+      dotnet: 3.1
+      script:
+        - dotnet restore
+        - dotnet test
