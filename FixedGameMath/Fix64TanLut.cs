@@ -1,4 +1,4 @@
-namespace FixedMath.NET 
+namespace FixedGameMath 
 {
     partial struct Fix64 
     {

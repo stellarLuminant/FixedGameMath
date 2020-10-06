@@ -1,4 +1,4 @@
-﻿using FixedMath.NET;
+﻿using FixedGameMath;
 using System.IO;
 
 namespace LUTGenerator

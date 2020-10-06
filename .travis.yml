@@ -1,6 +1,6 @@
 language: csharp
 mono: none
-solution: FixedMath.NET.sln
+solution: FixedGameMath.sln
 jobs:
   include:
     - os: windows

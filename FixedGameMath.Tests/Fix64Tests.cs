@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace FixedMath.NET.Tests
+namespace FixedGameMath.Tests
 {
     [TestClass]
     public class Fix64Tests

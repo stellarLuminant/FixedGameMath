@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 
-namespace FixedMath.NET
+namespace FixedGameMath
 {
     /// <summary>
     /// Represents a Q31.32 fixed-point number.

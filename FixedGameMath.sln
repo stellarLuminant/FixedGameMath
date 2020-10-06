@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30503.244
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FixedMath.NET", "FixedMath.NET\FixedMath.NET.csproj", "{E88EB600-1704-4745-8A5C-25F4B91364F6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FixedGameMath", "FixedGameMath\FixedGameMath.csproj", "{E88EB600-1704-4745-8A5C-25F4B91364F6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{2C33AD44-FFF8-4CF6-AA0A-DB6BF2B1F67F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LUTGenerator", "Tools\LUTGenerator\LUTGenerator.csproj", "{9475E661-D704-454C-90C2-B4424EFB4861}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LUTGenerator", "Tools\LUTGenerator\LUTGenerator.csproj", "{9475E661-D704-454C-90C2-B4424EFB4861}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FixedMath.NET.Tests", "FixedMath.NET.Tests\FixedMath.NET.Tests.csproj", "{0207ECA4-23FF-457D-9CDA-F94A91883829}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FixedGameMath.Tests", "FixedGameMath.Tests\FixedGameMath.Tests.csproj", "{0207ECA4-23FF-457D-9CDA-F94A91883829}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
