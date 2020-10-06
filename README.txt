@@ -1,7 +1,14 @@
-This library implements "Fix64", a 64 bit fixed point 31.32 numeric type and transcendent operations on it (square root, trig, etc). It is well covered by unit tests. However, it is still missing some operations; in particular, Tangent is not well tested yet.
+# FixedGameMath
+###### Fork of [asik/FixedMath.Net](https://github.com/asik/FixedMath.Net).
 
-In the unit tests you'll find implementations for Int32-based (Q15.16) and Byte-based (Q3.4) numeric types. These were used for exploration of boundary conditions etc., but I'm keeping the code there only for reference.
+A fixed-point numerics library that implements Fix64, a Q31.32 signed number alongside basic functions. This fork takes a more opinionated approach towards usage with a 2D game framework such as MonoGame.
 
-This project started as a port of libfixmath (http://code.google.com/p/libfixmath/).
+#### Tests on master: [![Build Status](https://travis-ci.com/stellarLuminant/FixedMath.NET.svg?branch=master)](https://travis-ci.com/stellarLuminant/FixedMath.NET)
 
-Note that the type requires explicit casts to convert to floating point and this is intentional, the difference between fixed point and floating point math is as important as the one between floating point and integral math.
+### Roadmap
+
+- **Convert trigonometric functions to degrees:** Degrees are significantly advantageous in fixed-point arithmetic, allowing us to represent special values such as PI and PI/2 as fully precise constants while also offering about 9 more bits of precision in all other operations.
+- **Add full-range precision parsing and printing:** Fix64 currently offers no native parsing solution, and casts to decimal in order to print.
+- **Add basic geometric structs:** Reimplementations of common structs such as Rects or Vector2 would mean less work on the user to integrate this library.
+- **Integrate test coverage analysis:** It would help to ensure all code paths are well-tested.
+- **Implement a determinism test suite:** Current test suite verifies functions by comparing them to verified implementations (such as System.Math floating point) with a small range of tolerance for error. A determinism test suite would instead store the outputs from a single target platform and compare them for bit-exactness on other platforms.
