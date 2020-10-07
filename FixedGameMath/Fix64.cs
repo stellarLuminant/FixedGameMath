@@ -82,6 +82,11 @@ namespace FixedGameMath
         public static readonly Fix64 QuarterRot = new Fix64((int)90);
 
         /// <summary>
+        /// 45 degrees representing 1/8 rotation.
+        /// </summary>
+        public static readonly Fix64 EighthRot = new Fix64((int)45);
+
+        /// <summary>
         /// Value of E
         /// </summary>
         public static readonly Fix64 E = new Fix64(E_CONST);
@@ -113,6 +118,22 @@ namespace FixedGameMath
         const long LOG2MIN = -0x2000000000;
         const long E_CONST = 0x2B7E15162;
         const int LUT_SIZE = (int)(PI_OVER_2 >> 15);
+
+        /// <summary>
+        /// Converts an angle measure in radians to degrees.
+        /// </summary>
+        public static Fix64 ToDegrees(Fix64 radians)
+        {
+            return HalfRot * radians / Pi;
+        }
+
+        /// <summary>
+        /// Converts an angle measure in degrees to radians.
+        /// </summary>
+        public static Fix64 ToRadians(Fix64 degrees)
+        {
+            return Pi * degrees / HalfRot;
+        }
 
         /// <summary>
         /// Returns a number indicating the sign of a Fix64 number.
@@ -916,14 +937,14 @@ namespace FixedGameMath
                 throw new ArgumentOutOfRangeException(nameof(x));
             }
 
-            if (x._rawValue == 0) return PiOver2;
+            if (x._rawValue == 0) return QuarterRot;
 
             var result = Atan(Sqrt(One - x * x) / x);
-            return x._rawValue < 0 ? result + Pi : result;
+            return x._rawValue < 0 ? result + HalfRot : result;
         }
 
         /// <summary>
-        /// Returns the arctan of of the specified number, calculated using Euler series
+        /// Returns the arctangent (degrees) of the specified number, calculated using Euler series
         /// This function has at least 7 decimals of accuracy.
         /// </summary>
         public static Fix64 Atan(Fix64 z)
@@ -966,11 +987,11 @@ namespace FixedGameMath
                 if (term._rawValue == 0) break;
             }
 
-            result = result * z / zSqPlusOne;
+            result = ToDegrees(result * z / zSqPlusOne);
 
             if (invert)
             {
-                result = PiOver2 - result;
+                result = QuarterRot - result;
             }
 
             if (neg)
@@ -986,46 +1007,20 @@ namespace FixedGameMath
             var xl = x._rawValue;
             if (xl == 0)
             {
-                if (yl > 0)
-                {
-                    return PiOver2;
-                }
                 if (yl == 0)
-                {
                     return Zero;
-                }
-                return -PiOver2;
-            }
-            Fix64 atan;
-            var z = y / x;
 
-            // Deal with overflow
-            if (One + (Fix64)0.28M * z * z == MaxValue)
-            {
-                return y < Zero ? -PiOver2 : PiOver2;
+                return yl > 0 ? QuarterRot : -QuarterRot;
             }
 
-            if (Abs(z) < One)
-            {
-                atan = z / (One + (Fix64)0.28M * z * z);
-                if (xl < 0)
-                {
-                    if (yl < 0)
-                    {
-                        return atan - Pi;
-                    }
-                    return atan + Pi;
-                }
-            }
-            else
-            {
-                atan = PiOver2 - z / (z * z + (Fix64)0.28M);
-                if (yl < 0)
-                {
-                    return atan - Pi;
-                }
-            }
-            return atan;
+            var atan = Atan(y / x);
+
+            // Atan(z) already maps to quadrants I and IV
+            if (xl >= 0)
+                return atan;
+            
+            // Check the sign of y to determine quadrants II and III
+            return atan + (yl < 0 ? -HalfRot: HalfRot);
         }
 
         public static explicit operator Fix64(long value)

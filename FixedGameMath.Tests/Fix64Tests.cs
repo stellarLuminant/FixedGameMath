@@ -44,10 +44,51 @@ namespace FixedGameMath.Tests
             -376, 435, -311, 116, 715, -1024, -487, 59, 724, 993
         };
 
+        private readonly List<(double radians, double degrees)> radiansToDegreesTable = new List<(double radians, double degrees)> 
+        {
+            (0, 0),
+            (0.785398163397, 45),
+            (1.57079632679, 90),
+            (3.14159265359, 180),
+            (4.71238898038, 270),
+            (6.28318530718, 360),
+            (-0.785398163397, -45),
+            (-1.57079632679, -90),
+            (-3.14159265359, -180),
+            (-4.71238898038, -270),
+            (-6.28318530718, -360)
+        };
+
         [TestMethod]
         public void Precision()
         {
             Assert.AreEqual(0.00000000023283064365386962890625m, Fix64.PrecisionDecimal);
+        }
+
+        [TestMethod]
+        public void ToDegrees()
+        {
+            const double maxDelta = 0.0000001;
+            foreach (var item in radiansToDegreesTable)
+            {
+                var actualDegrees = (double)Fix64.ToDegrees((Fix64)item.radians);
+                var delta = Math.Abs(item.degrees - actualDegrees);
+
+                Assert.IsTrue(delta <= maxDelta, $"ToDegrees({item.radians}) Precision: expected <{maxDelta} but got {delta}");
+            }
+        }
+
+        [TestMethod]
+        public void ToRadians()
+        {
+            const double maxDelta = 0.0000001;
+            foreach (var item in radiansToDegreesTable)
+            {
+                var actualRadians = (double)Fix64.ToRadians((Fix64)item.degrees);
+                var delta = Math.Abs(item.radians - actualRadians);
+
+                Assert.IsTrue(delta <= maxDelta, $"ToRadians({item.degrees}) Precision: expected <{maxDelta} but got {delta}");
+            }
         }
 
         [TestMethod]
@@ -991,16 +1032,30 @@ namespace FixedGameMath.Tests
             Console.WriteLine("Fix64.Atan time = {0}ms, Math.Atan time = {1}ms", swf.ElapsedMilliseconds, swd.ElapsedMilliseconds);
         }
 
+        private void AssertEqualWithinPrecision(Fix64 expected, Fix64 actual, Fix64 precision)
+        {
+            var delta = Fix64.Abs(expected - actual);
+
+            Assert.IsTrue(precision >= delta, $"Precision: (expected: {expected}, actual: {actual}, expectedDelta: {precision}, actualDelta: {delta}");
+        }
+
         [TestMethod]
         public void Atan2()
         {
             var deltas = new List<decimal>();
+
+            var precision = (Fix64)0.000001;
+
             // Identities
-            Assert.AreEqual(Fix64.HalfRot, Fix64.Atan2(Fix64.Zero, -Fix64.One));
-            Assert.AreEqual(Fix64.Zero, Fix64.Atan2(Fix64.Zero, Fix64.Zero));
-            Assert.AreEqual(Fix64.Zero, Fix64.Atan2(Fix64.Zero, Fix64.One));
-            Assert.AreEqual(Fix64.QuarterRot, Fix64.Atan2(Fix64.One, Fix64.Zero));
-            Assert.AreEqual(-Fix64.QuarterRot, Fix64.Atan2(-Fix64.One, Fix64.Zero));
+            AssertEqualWithinPrecision(Fix64.Zero, Fix64.Atan2(Fix64.Zero, Fix64.Zero), precision);
+            AssertEqualWithinPrecision(Fix64.Zero, Fix64.Atan2(Fix64.Zero, Fix64.One), precision);
+            AssertEqualWithinPrecision(Fix64.EighthRot, Fix64.Atan2(Fix64.One, Fix64.One), precision);
+            AssertEqualWithinPrecision(Fix64.QuarterRot, Fix64.Atan2(Fix64.One, Fix64.Zero), precision);
+            AssertEqualWithinPrecision(Fix64.QuarterRot + Fix64.EighthRot, Fix64.Atan2(Fix64.One, -Fix64.One), precision);
+            AssertEqualWithinPrecision(Fix64.HalfRot, Fix64.Atan2(Fix64.Zero, -Fix64.One), precision);
+            AssertEqualWithinPrecision(-Fix64.QuarterRot - Fix64.EighthRot, Fix64.Atan2(-Fix64.One, -Fix64.One), precision);
+            AssertEqualWithinPrecision(-Fix64.QuarterRot, Fix64.Atan2(-Fix64.One, Fix64.Zero), precision);
+            AssertEqualWithinPrecision(-Fix64.EighthRot, Fix64.Atan2(-Fix64.One, Fix64.One), precision);
 
             // Precision
             for (var y = -1.0; y < 1.0; y += 0.01)
