@@ -67,6 +67,21 @@ namespace FixedGameMath
         public static readonly Fix64 PiOver2Inv = new Fix64(PI_OVER_2_INV);
 
         /// <summary>
+        /// 360 degrees representing one full rotation.
+        /// </summary>
+        public static readonly Fix64 FullRot = new Fix64((int)360);
+
+        /// <summary>
+        /// 180 degrees representing one half rotation.
+        /// </summary>
+        public static readonly Fix64 HalfRot = new Fix64((int)180);
+
+        /// <summary>
+        /// 90 degrees representing one quarter rotation.
+        /// </summary>
+        public static readonly Fix64 QuarterRot = new Fix64((int)90);
+
+        /// <summary>
         /// Value of E
         /// </summary>
         public static readonly Fix64 E = new Fix64(E_CONST);
