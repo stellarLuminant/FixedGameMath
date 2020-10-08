@@ -709,6 +709,27 @@ namespace FixedGameMath.Tests
         }
 
         [TestMethod]
+        public void FastSub()
+        {
+            foreach (var inputA in _testCases)
+            {
+                var fixedInputA = Fix64.FromRaw(inputA);
+                foreach (var inputB in _testCases)
+                {
+                    var fixedInputB = Fix64.FromRaw(inputB);
+
+                    var fixedDiff = Fix64.FastSub(fixedInputA, fixedInputB);
+                    
+                    var expectedDiff = inputA - inputB;
+
+                    var actualDiff = fixedDiff.RawValue;
+
+                    Assert.AreEqual(expectedDiff, actualDiff);
+                }
+            }
+        }
+
+        [TestMethod]
         public void HasFraction()
         {
             foreach (var testCase in _testCases)
@@ -756,33 +777,36 @@ namespace FixedGameMath.Tests
             return 180.0 * radians / Math.PI;
         }
 
-        //[TestMethod]
-        //public void SinBenchmark()
-        //{
-        //    var deltas = new List<double>();
+        // TODO: Figure out what to do with these benchmarks.
+        public void SinBenchmark()
+        {
+            var deltas = new List<double>();
 
-        //    var swf = new Stopwatch();
-        //    var swd = new Stopwatch();
+            var swf = new Stopwatch();
+            var swd = new Stopwatch();
 
-        //    // Restricting the range to from 0 to Pi/2
-        //    for (var angle = 0.0; angle <= 2 * Math.PI; angle += 0.000004)
-        //    {
-        //        var f = (Fix64)angle;
-        //        swf.Start();
-        //        var actualF = Fix64.Sin(f);
-        //        swf.Stop();
-        //        var actual = (double)actualF;
-        //        swd.Start();
-        //        var expectedD = Math.Sin(angle);
-        //        swd.Stop();
-        //        var expected = (double)expectedD;
-        //        var delta = Math.Abs(expected - actual);
-        //        deltas.Add(delta);
-        //    }
-        //    Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / (double)Fix64.Precision);
-        //    Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / (double)Fix64.Precision);
-        //    Console.WriteLine("Fix64.Sin time = {0}ms, Math.Sin time = {1}ms", swf.ElapsedMilliseconds, swd.ElapsedMilliseconds);
-        //}
+            // Restricting the range to from 0 to Pi/2
+            for (var angle = 0.0; angle <= 360.0; angle += 0.001)
+            {
+                var f = (Fix64)angle;
+                var radians = angle * Math.PI / 180.0;
+
+                swf.Start();
+                var actualF = Fix64.Sin(f);
+                swf.Stop();
+                var actual = (double)actualF;
+
+                swd.Start();
+                var expected = Math.Sin(radians);
+                swd.Stop();
+
+                var delta = Math.Abs(expected - actual);
+                deltas.Add(delta);
+            }
+            Console.WriteLine("Max error: {0} ({1} times precision)", deltas.Max(), deltas.Max() / (double)Fix64.PrecisionDecimal);
+            Console.WriteLine("Average precision: {0} ({1} times precision)", deltas.Average(), deltas.Average() / (double)Fix64.PrecisionDecimal);
+            Console.WriteLine("Fix64.Sin time = {0}ms, Math.Sin time = {1}ms", swf.ElapsedMilliseconds, swd.ElapsedMilliseconds);
+        }
 
         [TestMethod]
         public void Sin()
@@ -800,13 +824,13 @@ namespace FixedGameMath.Tests
             Assert.IsTrue(Fix64.Sin(-Fix64.FullRot) == Fix64.Zero);
 
 
-            for (double angle = -360.0; angle <= 360.0; angle += 0.003)
+            for (double angle = -360.0; angle <= 360.0; angle += 0.001)
             {
                 var f = (Fix64)angle;
                 var actualF = Fix64.Sin(f);
                 var expected = (decimal)Math.Sin(ToRadians(angle));
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.IsTrue(delta <= 0.0000001M, $"Sin({angle}): expected {expected} but got {actualF}");
+                Assert.IsTrue(delta <= 0.0001M, $"Sin({angle}): expected {expected} but got {actualF}");
             }
 
             var deltas = new List<decimal>();
@@ -816,31 +840,7 @@ namespace FixedGameMath.Tests
                 var actualF = Fix64.Sin(f);
                 var expected = (decimal)Math.Sin(ToRadians((double)f));
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.IsTrue(delta <= 0.0000001M, $"Sin({f}): expected {expected} but got {actualF}");
-            }
-        }
-
-        // TODO: Keep working on converting trig tests to degrees.
-
-        [TestMethod]
-        public void FastSin()
-        {
-            for (double angle = -360.0; angle <= 360.0; angle += 0.003)
-            {
-                var f = (Fix64)angle;
-                var actualF = Fix64.FastSin(f);
-                var expected = (decimal)Math.Sin(ToRadians(angle));
-                var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.IsTrue(delta <= 0.01M, $"Sin({angle}): expected {expected} but got {actualF}");
-            }
-
-            foreach (var val in _testCases)
-            {
-                var f = Fix64.FromRaw(val);
-                var actualF = Fix64.FastSin(f);
-                var expected = (decimal)Math.Sin(ToRadians((double)f));
-                var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.IsTrue(delta <= 0.01M, $"Sin({f}): expected {expected} but got {actualF}");
+                Assert.IsTrue(delta <= 0.0001M, $"Sin({f}): expected {expected} but got {actualF}");
             }
         }
 
@@ -902,13 +902,13 @@ namespace FixedGameMath.Tests
             Assert.IsTrue(Fix64.Cos(-Fix64.FullRot) == Fix64.One);
 
 
-            for (double angle = -360.0; angle <= 360.0; angle += 0.003)
+            for (double angle = -360.0; angle <= 360.0; angle += 0.001)
             {
                 var f = (Fix64)angle;
                 var actualF = Fix64.Cos(f);
                 var expected = (decimal)Math.Cos(ToRadians(angle));
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.IsTrue(delta <= 0.0000001M, $"Cos({angle}): expected {expected} but got {actualF}");
+                Assert.IsTrue(delta <= 0.0001M, $"Cos({angle}): expected {expected} but got {actualF}");
             }
 
             foreach (var val in _testCases)
@@ -917,29 +917,7 @@ namespace FixedGameMath.Tests
                 var actualF = Fix64.Cos(f);
                 var expected = (decimal)Math.Cos(ToRadians((double)f));
                 var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.IsTrue(delta <= 0.0000001M, $"Cos({f}): expected {expected} but got {actualF}");
-            }
-        }
-
-        [TestMethod]
-        public void FastCos()
-        {
-            for (double angle = -360.0; angle <= 360.0; angle += 0.003)
-            {
-                var f = (Fix64)angle;
-                var actualF = Fix64.FastCos(f);
-                var expected = (decimal)Math.Cos(ToRadians(angle));
-                var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.IsTrue(delta <= 0.01M, $"Cos({angle}): expected {expected} but got {actualF}");
-            }
-
-            foreach (var val in _testCases)
-            {
-                var f = Fix64.FromRaw(val);
-                var actualF = Fix64.FastCos(f);
-                var expected = (decimal)Math.Cos(ToRadians((double)f));
-                var delta = Math.Abs(expected - (decimal)actualF);
-                Assert.IsTrue(delta <= 0.01M, $"Cos({f}): expected {expected} but got {actualF}");
+                Assert.IsTrue(delta <= 0.0001M, $"Cos({f}): expected {expected} but got {actualF}");
             }
         }
 
@@ -950,12 +928,15 @@ namespace FixedGameMath.Tests
             Assert.IsTrue(Fix64.Tan(Fix64.HalfRot) == Fix64.Zero);
             Assert.IsTrue(Fix64.Tan(-Fix64.HalfRot) == Fix64.Zero);
 
+            Assert.IsTrue(Fix64.Tan(Fix64.QuarterRot) == Fix64.MaxValue);
+            Assert.IsTrue(Fix64.Tan(-Fix64.QuarterRot) == Fix64.MinValue);
+
             Assert.IsTrue(Fix64.Tan(Fix64.QuarterRot - Fix64.PrecisionUnit) > Fix64.Zero);
             Assert.IsTrue(Fix64.Tan(Fix64.QuarterRot + Fix64.PrecisionUnit) < Fix64.Zero);
             Assert.IsTrue(Fix64.Tan(-Fix64.QuarterRot - Fix64.PrecisionUnit) > Fix64.Zero);
             Assert.IsTrue(Fix64.Tan(-Fix64.QuarterRot + Fix64.PrecisionUnit) < Fix64.Zero);
 
-            int inputBitPrecision = 15;
+            int inputBitPrecision = 10;
             int expectedFunctionPrecision = 5;
             double startRange = -90.0;
             double endRange = 90.0;
@@ -967,7 +948,6 @@ namespace FixedGameMath.Tests
                 var expected = (Fix64)Math.Tan(ToRadians(angle));
 
                 AreEqualWithinBitPrecision(actualF, expected, expectedFunctionPrecision);
-                //TODO figure out a real way to test this function
             }
         }
 
@@ -1005,7 +985,6 @@ namespace FixedGameMath.Tests
         }
         
         // TODO: Figure out what to do with these benchmarks.
-
         public void AtanBenchmark()
         {
             var deltas = new List<decimal>();
@@ -1018,12 +997,16 @@ namespace FixedGameMath.Tests
                 for (int k = 0; k < 1000; ++k)
                 {
                     var xf = (Fix64)x;
+
                     swf.Start();
                     var actualF = Fix64.Atan(xf);
                     swf.Stop();
+
                     swd.Start();
-                    var expected = Math.Atan((double)xf);
+                    var expectedRadians = Math.Atan((double)xf);
                     swd.Stop();
+                    var expected = expectedRadians * 180.0 / Math.PI;
+
                     deltas.Add(Math.Abs((decimal)actualF - (decimal)expected));
                 }
             }
@@ -1091,7 +1074,6 @@ namespace FixedGameMath.Tests
         }
 
         // TODO: Figure out what to do with these benchmarks.
-
         public void Atan2Benchmark()
         {
             var deltas = new List<decimal>();
@@ -1107,12 +1089,16 @@ namespace FixedGameMath.Tests
                     {
                         var yf = (Fix64)y;
                         var xf = (Fix64)x;
+
                         swf.Start();
                         var actualF = Fix64.Atan2(yf, xf);
                         swf.Stop();
+
                         swd.Start();
-                        var expected = Math.Atan2((double)yf, (double)xf);
+                        var expectedRadians = Math.Atan2((double)yf, (double)xf);
                         swd.Stop();
+                        var expected = expectedRadians * 180.0 / Math.PI;
+
                         deltas.Add(Math.Abs((decimal)actualF - (decimal)expected));
                     }
                 }

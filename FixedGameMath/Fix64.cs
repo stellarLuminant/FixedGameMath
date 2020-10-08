@@ -100,7 +100,6 @@ namespace FixedGameMath
         // Equivalent to ln(2)
         static readonly Fix64 Ln2 = new Fix64(LN2);
 
-        static readonly Fix64 LutInterval = (Fix64)(LUT_SIZE - 1) / PiOver2;
         const long MAX_VALUE = Int64.MaxValue;
         const long MIN_VALUE = Int64.MinValue;
         const int NUM_BITS = 64;
@@ -117,7 +116,11 @@ namespace FixedGameMath
         const long LOG2MAX =  0x1F00000000;
         const long LOG2MIN = -0x2000000000;
         const long E_CONST = 0x2B7E15162;
-        const int LUT_SIZE = (int)(PI_OVER_2 >> 15);
+
+        const int LUT_FRACTION_BITS = 10;
+        const int LUT_ANGLE_TO_INDEX_BITS = FRACTIONAL_PLACES - LUT_FRACTION_BITS;
+        static readonly long LutInputPrecision = ONE >> LUT_FRACTION_BITS;
+        static readonly uint LutSize = (uint)(int)(QuarterRot._rawValue >> LUT_ANGLE_TO_INDEX_BITS);
 
         /// <summary>
         /// Converts an angle measure in radians to degrees.
@@ -778,152 +781,107 @@ namespace FixedGameMath
 
         /// <summary>
         /// Returns the Sine of x.
-        /// The relative error is less than 1E-10 for x in [-2PI, 2PI], and less than 1E-7 in the worst case.
         /// </summary>
         public static Fix64 Sin(Fix64 x)
-        {
-            var clampedL = ClampSinValue(x._rawValue, out var flipHorizontal, out var flipVertical);
-            var clamped = new Fix64(clampedL);
-
-            // Find the two closest values in the LUT and perform linear interpolation
-            // This is what kills the performance of this function on x86 - x64 is fine though
-            var rawIndex = FastMul(clamped, LutInterval);
-            var roundedIndex = Round(rawIndex);
-            var indexError = FastSub(rawIndex, roundedIndex);
-
-            var nearestValue = new Fix64(SinLut[flipHorizontal ?
-                SinLut.Length - 1 - (int)roundedIndex :
-                (int)roundedIndex]);
-            var secondNearestValue = new Fix64(SinLut[flipHorizontal ?
-                SinLut.Length - 1 - (int)roundedIndex - Sign(indexError) :
-                (int)roundedIndex + Sign(indexError)]);
-
-            var delta = FastMul(indexError, FastAbs(FastSub(nearestValue, secondNearestValue)))._rawValue;
-            var interpolatedValue = nearestValue._rawValue + (flipHorizontal ? -delta : delta);
-            var finalValue = flipVertical ? -interpolatedValue : interpolatedValue;
-            return new Fix64(finalValue);
-        }
-
-        /// <summary>
-        /// Returns a rough approximation of the Sine of x.
-        /// This is at least 3 times faster than Sin() on x86 and slightly faster than Math.Sin(),
-        /// however its accuracy is limited to 4-5 decimals, for small enough values of x.
-        /// </summary>
-        public static Fix64 FastSin(Fix64 x)
         {
             var clampedL = ClampSinValue(x._rawValue, out bool flipHorizontal, out bool flipVertical);
 
             // Here we use the fact that the SinLut table has a number of entries
-            // equal to (PI_OVER_2 >> 15) to use the angle to index directly into it
-            var rawIndex = (uint)(clampedL >> 15);
-            if (rawIndex >= LUT_SIZE)
-            {
-                rawIndex = LUT_SIZE - 1;
-            }
+            // equal to (90 << 10) to use the angle to index directly into it
+            var rawIndex = (uint)(clampedL >> LUT_ANGLE_TO_INDEX_BITS);
+
+            // Special case handling since sin(90) isn't stored in the table itself.
+            if (rawIndex == 0 && flipHorizontal)
+                return flipVertical ? -One : One;
+
             var nearestValue = SinLut[flipHorizontal ?
                 SinLut.Length - 1 - (int)rawIndex :
                 (int)rawIndex];
             return new Fix64(flipVertical ? -nearestValue : nearestValue);
         }
 
-
+        /// <summary>
+        /// Clamps an angle to [0-90] in raw fixed point and outputs needed flip operations for sin(x).
+        /// </summary>
         static long ClampSinValue(long angle, out bool flipHorizontal, out bool flipVertical)
         {
-            var largePI = 7244019458077122842;
-            // Obtained from ((Fix64)1686629713.065252369824872831112M).m_rawValue
-            // This is (2^29)*PI, where 29 is the largest N such that (2^N)*PI < MaxValue.
-            // The idea is that this number contains way more precision than PI_TIMES_2,
-            // and (((x % (2^29*PI)) % (2^28*PI)) % ... (2^1*PI) = x % (2 * PI)
-            // In practice this gives us an error of about 1,25e-9 in the worst case scenario (Sin(MaxValue))
-            // Whereas simply doing x % PI_TIMES_2 is the 2e-3 range.
+            var clampedFullRot = angle;
 
-            var clamped2Pi = angle;
-            for (int i = 0; i < 29; ++i)
-            {
-                clamped2Pi %= (largePI >> i);
-            }
+            clampedFullRot %= FullRot._rawValue;
+
             if (angle < 0)
+                clampedFullRot += FullRot._rawValue;
+
+            // The LUT contains values for 0 - 90; every other value must be obtained by
+            // vertical or horizontal mirroring
+            flipVertical = clampedFullRot >= HalfRot._rawValue;
+            // obtain (angle % 180) from (angle % 360) - much faster than doing another modulo
+            var clampedHalfRot = clampedFullRot;
+            while (clampedHalfRot >= HalfRot._rawValue)
             {
-                clamped2Pi += PI_TIMES_2;
+                clampedHalfRot -= HalfRot._rawValue;
+            }
+            flipHorizontal = clampedHalfRot >= QuarterRot._rawValue;
+            // obtain (angle % 90) from (angle % 180) - much faster than doing another modulo
+            var clampedQuarterRot = clampedHalfRot;
+            if (clampedQuarterRot >= QuarterRot._rawValue)
+            {
+                clampedQuarterRot -= QuarterRot._rawValue;
+            }
+            return clampedQuarterRot;
+        }
+
+        /// <summary>
+        /// Clamps an angle to [0, 90] in raw fixed point and outputs if a flip is needed for tan(x).
+        /// </summary>
+        static long ClampTanValue(long angle, out bool flip)
+        {
+            var clampedHalfRot = angle % HalfRot._rawValue;
+            flip = false;
+
+            if (clampedHalfRot < 0)
+            {
+                clampedHalfRot = -clampedHalfRot;
+                flip = true;
             }
 
-            // The LUT contains values for 0 - PiOver2; every other value must be obtained by
-            // vertical or horizontal mirroring
-            flipVertical = clamped2Pi >= PI;
-            // obtain (angle % PI) from (angle % 2PI) - much faster than doing another modulo
-            var clampedPi = clamped2Pi;
-            while (clampedPi >= PI)
+            if (clampedHalfRot > QuarterRot._rawValue)
             {
-                clampedPi -= PI;
+                flip = !flip;
+                clampedHalfRot = QuarterRot._rawValue - (clampedHalfRot - QuarterRot._rawValue);
             }
-            flipHorizontal = clampedPi >= PI_OVER_2;
-            // obtain (angle % PI_OVER_2) from (angle % PI) - much faster than doing another modulo
-            var clampedPiOver2 = clampedPi;
-            if (clampedPiOver2 >= PI_OVER_2)
-            {
-                clampedPiOver2 -= PI_OVER_2;
-            }
-            return clampedPiOver2;
+
+            return clampedHalfRot;
         }
 
         /// <summary>
         /// Returns the cosine of x.
-        /// The relative error is less than 1E-10 for x in [-2PI, 2PI], and less than 1E-7 in the worst case.
         /// </summary>
         public static Fix64 Cos(Fix64 x)
         {
             var xl = x._rawValue;
-            var rawAngle = xl + (xl > 0 ? -PI - PI_OVER_2 : PI_OVER_2);
+            var rawAngle = xl + (xl > 0 ? -HalfRot._rawValue - QuarterRot._rawValue : QuarterRot._rawValue);
             return Sin(new Fix64(rawAngle));
-        }
-
-        /// <summary>
-        /// Returns a rough approximation of the cosine of x.
-        /// See FastSin for more details.
-        /// </summary>
-        public static Fix64 FastCos(Fix64 x)
-        {
-            var xl = x._rawValue;
-            var rawAngle = xl + (xl > 0 ? -PI - PI_OVER_2 : PI_OVER_2);
-            return FastSin(new Fix64(rawAngle));
         }
 
         /// <summary>
         /// Returns the tangent of x.
         /// </summary>
-        /// <remarks>
-        /// This function is not well-tested. It may be wildly inaccurate.
-        /// Current tests indicate a minimum of 5 bits of precision across inputs precise as 15 bits.
-        /// </remarks>
         public static Fix64 Tan(Fix64 x)
         {
-            var clampedPi = x._rawValue % PI;
-            var flip = false;
-            if (clampedPi < 0)
-            {
-                clampedPi = -clampedPi;
-                flip = true;
-            }
-            if (clampedPi > PI_OVER_2)
-            {
-                flip = !flip;
-                clampedPi = PI_OVER_2 - (clampedPi - PI_OVER_2);
-            }
+            var clampedL = ClampTanValue(x._rawValue, out bool flip);
 
-            var clamped = new Fix64(clampedPi);
+            // Here we use the fact that the TanLut table has a number of entries
+            // equal to (90 << 10) to use the angle to index directly into it
+            var rawIndex = (uint)(clampedL >> LUT_ANGLE_TO_INDEX_BITS);
 
-            // Find the two closest values in the LUT and perform linear interpolation
-            var rawIndex = FastMul(clamped, LutInterval);
-            var roundedIndex = Round(rawIndex);
-            var indexError = FastSub(rawIndex, roundedIndex);
+            // If the value of Tan overflows past our table
+            // (i.e. 90 degrees) we return the largest value we can.
+            if (rawIndex >= LutSize)
+                return flip ? MinValue : MaxValue;
 
-            var nearestValue = new Fix64(TanLut[(int)roundedIndex]);
-            var secondNearestValue = new Fix64(TanLut[(int)roundedIndex + Sign(indexError)]);
-
-            var delta = FastMul(indexError, FastAbs(FastSub(nearestValue, secondNearestValue)))._rawValue;
-            var interpolatedValue = nearestValue._rawValue + delta;
-            var finalValue = flip ? -interpolatedValue : interpolatedValue;
-            return new Fix64(finalValue);
+            var nearestValue = TanLut[(int)rawIndex];
+            return new Fix64(flip ? -nearestValue : nearestValue);
         }
 
         /// <summary>
@@ -1146,12 +1104,12 @@ namespace FixedGameMath
 
         public static long[] GenerateSinLut()
         {
-            var table = new long[LUT_SIZE];
+            var table = new long[LutSize];
 
-            for (var i = 0; i < LUT_SIZE; i++)
+            for (var i = 0; i < LutSize; i++)
             {
-                var angle = i * Math.PI * 0.5 / (LUT_SIZE - 1);
-                var sin = Math.Sin(angle);
+                var angle = new Fix64(i * LutInputPrecision);
+                var sin = Math.Sin((double)angle * Math.PI / 180.0);
                 var rawValue = ((Fix64)sin).RawValue;
                 
                 table[i] = rawValue;
@@ -1164,12 +1122,13 @@ namespace FixedGameMath
         {
             var maxValue = (double)MaxValue;
 
-            var table = new long[LUT_SIZE];
+            var table = new long[LutSize];
 
-            for (var i = 0; i < LUT_SIZE; i++)
+            for (var i = 0; i < LutSize; i++)
             {
-                var angle = i * Math.PI * 0.5 / (LUT_SIZE - 1);
-                var tan = Math.Tan(angle);
+                var angle = new Fix64(i * LutInputPrecision);
+                var tan = Math.Tan((double)angle * Math.PI / 180.0);
+                
                 var fixedNum = tan > maxValue || tan < 0 ? MaxValue : (Fix64)tan;
                 var rawValue = fixedNum.RawValue;
 

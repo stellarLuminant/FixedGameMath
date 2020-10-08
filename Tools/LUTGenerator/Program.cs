@@ -1,4 +1,5 @@
 ﻿using FixedGameMath;
+using System;
 using System.IO;
 
 namespace LUTGenerator
@@ -12,7 +13,7 @@ namespace LUTGenerator
         }
 
         internal const string SinLutHeading = 
-@"namespace FixedMath.NET 
+@"namespace FixedGameMath
 {
     partial struct Fix64 
     {
@@ -20,7 +21,7 @@ namespace LUTGenerator
         {";
 
         internal const string TanLutHeading = 
-@"namespace FixedMath.NET 
+@"namespace FixedGameMath
 {
     partial struct Fix64 
     {
@@ -37,7 +38,10 @@ namespace LUTGenerator
 
         internal static void WriteSinLutToFile()
         {
+            Console.WriteLine("Generating Sine Lookup Table...");
             var sinLut = Fix64.GenerateSinLut();
+
+            Console.WriteLine($"Writing {sinLut.Length} entries to file...");
 
             using var writer = new StreamWriter("Fix64SinLut.cs");
 
@@ -60,7 +64,10 @@ namespace LUTGenerator
 
         internal static void WriteTanLutToFile()
         {
+            Console.WriteLine("Generating Tangent Lookup Table...");
             var tanLut = Fix64.GenerateTanLut();
+
+            Console.WriteLine($"Writing {tanLut.Length} entries to file...");
 
             using var writer = new StreamWriter("Fix64TanLut.cs");
 
