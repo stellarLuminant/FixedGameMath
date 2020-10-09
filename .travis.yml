@@ -9,8 +9,7 @@ jobs:
         - choco install dotnetcore-sdk --version 3.1.402
         - choco install codecov
       after_script:
-        - FOR /F "tokens=*" %%g IN ('dir /b/s coverage.cobertura.xml') do (SET reportpath=%%g)
-        - copy %reportpath%
+        - powershell -command "Copy-Item -Path '.\FixedGameMath.Tests\TestResults' -Filter 'coverage.cobertura.xml' -Recurse -Container:$false"
         - codecov.exe -f coverage.cobertura.xml
     - os: osx
       dotnet: 3.1.402
