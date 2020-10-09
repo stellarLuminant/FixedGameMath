@@ -1,6 +1,6 @@
 # FixedGameMath
 
-[![Build Status](https://travis-ci.com/stellarLuminant/FixedMath.NET.svg?branch=master)](https://travis-ci.com/stellarLuminant/FixedMath.NET) 
+[![Build Status](https://travis-ci.com/stellarLuminant/FixedGameMath.svg?branch=master)](https://travis-ci.com/stellarLuminant/FixedGameMath) 
 [![codecov](https://codecov.io/gh/stellarLuminant/FixedGameMath/branch/master/graph/badge.svg)](https://codecov.io/gh/stellarLuminant/FixedGameMath)
 
 ###### Fork of [asik/FixedMath.Net](https://github.com/asik/FixedMath.Net).
