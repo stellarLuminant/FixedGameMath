@@ -1,22 +1,21 @@
+arch: amd64
 language: csharp
 mono: none
 solution: FixedGameMath.sln
 jobs:
   include:
     - os: windows
-      install: 
+      before_install: 
         - choco install dotnetcore-sdk --version 3.1.402
-      script:
-        - dotnet restore
-        - dotnet test
     - os: osx
-      install: 
-        - curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin -Channel 3.1
-      script:
-        - /Users/travis/.dotnet/dotnet restore
-        - /Users/travis/.dotnet/dotnet test
+      dotnet: 3.1.402
     - os: linux
-      dotnet: 3.1
-      script:
-        - dotnet restore
-        - dotnet test
+      dotnet: 3.1.402
+
+install: 
+  - dotnet tool install --global Codecov.Tool
+script:
+  - dotnet restore
+  - dotnet test /p:CollectCoverage=true /p:CoverletOutput='./coverlet-results.json'
+after_script: 
+  - codecov -f "./coverlet-results.json"

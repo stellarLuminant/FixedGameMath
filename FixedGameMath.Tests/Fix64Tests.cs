@@ -2,11 +2,13 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace FixedGameMath.Tests
 {
-    [TestClass]
+    // Excluded from coverage since these are tests.
+    [TestClass, ExcludeFromCodeCoverage]
     public class Fix64Tests
     {
         private readonly long[] _testCases = {

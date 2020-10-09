@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
 namespace FixedGameMath
@@ -1102,6 +1103,10 @@ namespace FixedGameMath
             return new Fix64(rawValue);
         }
 
+        // Excluded from code coverage because:
+        // - this is not part of the user api
+        // - this is a part of implementation of already tested functions
+        [ExcludeFromCodeCoverage]
         public static long[] GenerateSinLut()
         {
             var table = new long[LutSize];
@@ -1118,6 +1123,10 @@ namespace FixedGameMath
             return table;
         }
 
+        // Excluded from code coverage because:
+        // - this is not part of the user api
+        // - this is a part of implementation of already tested functions
+        [ExcludeFromCodeCoverage]
         public static long[] GenerateTanLut()
         {
             var maxValue = (double)MaxValue;

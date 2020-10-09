@@ -1,9 +1,14 @@
 ﻿using FixedGameMath;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 
 namespace LUTGenerator
 {
+    // Excluded from code coverage because:
+    // - this is not part of the user api
+    // - this is a part of implementation of already tested functions
+    [ExcludeFromCodeCoverage]
     internal class Program
     {
         internal static void Main()
