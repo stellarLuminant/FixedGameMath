@@ -9,16 +9,16 @@ jobs:
         - choco install dotnetcore-sdk --version 3.1.402
         - choco install codecov
       after_script:
-        - codecov.exe -f ./FixedGameMath_coverage.xml
+        - codecov.exe
     - os: osx
       dotnet: 3.1.402
       after_script:
-        - bash <(curl -s https://codecov.io/bash) -f ./FixedGameMath_coverage.xml
+        - bash <(curl -s https://codecov.io/bash)
     - os: linux
       dotnet: 3.1.402
       after_script:
-        - bash <(curl -s https://codecov.io/bash) -f ./FixedGameMath_coverage.xml
+        - bash <(curl -s https://codecov.io/bash)
 
 script:
   - dotnet restore
-  - dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput='./FixedGameMath_coverage.xml'
+  - dotnet test --collect:"XPlat Code Coverage"
