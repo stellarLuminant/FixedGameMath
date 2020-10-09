@@ -5,17 +5,20 @@ solution: FixedGameMath.sln
 jobs:
   include:
     - os: windows
-      before_install: 
+      install: 
         - choco install dotnetcore-sdk --version 3.1.402
+        - choco install codecov
+      after_script:
+        - codecov.exe -f ./FixedGameMath_coverage.xml
     - os: osx
       dotnet: 3.1.402
+      after_script:
+        - bash <(curl -s https://codecov.io/bash) -f ./FixedGameMath_coverage.xml
     - os: linux
       dotnet: 3.1.402
+      after_script:
+        - bash <(curl -s https://codecov.io/bash) -f ./FixedGameMath_coverage.xml
 
-install: 
-  - dotnet tool install --global Codecov.Tool
 script:
   - dotnet restore
-  - dotnet test /p:CollectCoverage=true /p:CoverletOutput='./coverlet-results.json'
-after_script: 
-  - codecov -f "./coverlet-results.json"
+  - dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput='./FixedGameMath_coverage.xml'
