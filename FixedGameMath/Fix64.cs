@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace FixedGameMath
 {
@@ -1101,6 +1103,178 @@ namespace FixedGameMath
         public static Fix64 FromRaw(long rawValue)
         {
             return new Fix64(rawValue);
+        }
+
+        private static readonly Regex NumberValidationRegex =
+            new Regex(@"^-?[0-9]*\.?[0-9]*", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+        /// <summary>
+        ///     Indicates if the input is a valid string representation of a Fix64 number.
+        /// </summary>
+        public static bool CanParse(string input)
+        {
+            return !string.IsNullOrWhiteSpace(input) && NumberValidationRegex.Match(input).Value == input;
+        }
+
+        /// <summary>
+        ///     Converts the string representation of a number to its Fix64 equivalent.
+        ///     A return value indicates whether the conversion succeeded.
+        /// </summary>
+        public static bool TryParse(string input, out Fix64 result)
+        {
+            try
+            {
+                result = Parse(input);
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                result = Zero;
+                return false;
+            }
+        }
+
+        /// <summary>
+        ///     Converts the string representation of a number to its Fix64 equivalent.
+        /// </summary>
+        public static Fix64 Parse(string input)
+        {
+            try
+            {
+                if (input.LastIndexOf('-') > 0)
+                    throw new FormatException("Negative sign of input cannot be after first character in string");
+
+                if (input == "-")
+                    return Zero;
+
+                // If it doesn't have a decimal, parsing is easy.
+                if (!input.Contains('.'))
+                    return ParseWhole(input);
+
+                // If we're here, we have a decimal, which requires a bit more work.
+                // Let's first check for a negative sign.
+                var isNegative = input[0] == '-';
+
+                // Get rid of the negative sign by cutting off the first char.
+                if (isNegative)
+                    input = input.Substring(1);
+
+                // Split the string on the decimal point. We should get two strings.
+                var inputs = input.Split('.');
+
+                if (inputs.Length != 2)
+                    throw new FormatException("Multiple decimal points cannot be present in input");
+
+                var wholeStr = inputs[0];
+
+                // Trimming the end of the decimalStr for insignificant zeroes lets us get an early out if it's all zero.
+                var decimalStr = inputs[1].TrimEnd('0');
+
+                // Empty strings might occur- we should check for that.
+                // Whole value has very little complexity- we can parse it right away.
+                var wholeValue = string.IsNullOrWhiteSpace(wholeStr) ? Zero : ParseWhole(wholeStr);
+
+                // If our decimal turns out to be zero (a truncated string means zero due to trimming)
+                // we have an early exit right here. Flip the sign if necessary.
+                if (string.IsNullOrWhiteSpace(decimalStr))
+                    return wholeValue * (isNegative ? -One : One);
+
+                // Add up the two parsed values, and then flip its sign.
+                return (ParseDecString(decimalStr) + wholeValue) * (isNegative ? -One : One);
+            }
+            catch (Exception exception)
+            {
+                throw new ArgumentException("The inputted string could not be validly parsed to Fix64.", nameof(input),
+                    exception);
+            }
+        }
+
+        // A shorthand for parsing whole numbers into Fix64.
+        private static Fix64 ParseWhole(string input)
+        {
+            return new Fix64(int.Parse(input));
+        }
+
+        private static Fix64 ParseDecString(string input)
+        {
+            var threshold = new BigInteger(10);
+
+            // Threshold determines where the "integer place" is.
+            for (int i = 0; i < input.Length - 1; i++)
+                threshold *= new BigInteger(10);
+
+            var intValue = BigInteger.Parse(input);
+
+            ulong rawValue = 0;
+
+            for (int i = 0; i < 32; i++)
+            {
+                // Shift this up (multiply by 2)
+                intValue <<= 1;
+
+                // "Cut off" the integer portion, aka the portion that is >= threshold
+                if (intValue >= threshold)
+                {
+                    intValue -= threshold;
+                    // If we have an integer, add a bit here.
+                    // This is descending- it will first add highest value bits and go left to right.
+                    rawValue += 1UL << 31 - i;
+                }
+
+                // No need to continue checking if our value is zero.
+                if (intValue == 0)
+                    break;
+            }
+
+            // This function lets the FixNum use our binary sequence verbatim
+            return FromRaw((long)rawValue);
+        }
+
+        /// <summary>
+        /// Prints a Fix64 value to a string with up to 32 digits of precision.
+        /// </summary>
+        public static string Print(Fix64 value)
+        {
+            return Print(value, 32);
+        }
+
+        private static readonly Fix64 Ten = new Fix64(10L * ONE);
+
+        /// <summary>
+        /// Prints a Fix64 value as a string with a configurable number of digits.
+        /// The number of digits to print will be greater than 0.
+        /// </summary>
+        public static string Print(Fix64 value, int digits)
+        {
+            digits = Math.Max(digits, 1);
+            string output = "";
+
+            if (Sign(value) == -1)
+            {
+                output += "-";
+                value = Abs(value);
+            }
+
+            output += ((long)Floor(value)).ToString();
+
+            if (!HasFraction(value))
+                return output;
+
+            output += ".";
+
+            value = Fraction(value);
+
+            for (int i = 0; i < digits; i++)
+            {
+                value *= Ten;
+                output += value.RawValue >> 32;
+                value = FromRaw(value.RawValue & (1L << 32) - 1L);
+
+                if (value == Zero)
+                    break;
+            }
+
+            return output;
         }
 
         // Excluded from code coverage because:
