@@ -1169,5 +1169,145 @@ namespace FixedGameMath.Tests
             Array.Sort(numsDecimal);
             Assert.IsTrue(nums.Select(t => (decimal)t).SequenceEqual(numsDecimal));
         }
+
+        private static readonly List<(string text, ulong rawValue)> ParseSuccessCases = new List<(string text, ulong rawValue)>
+        {
+            ("0", 0x0UL),
+            ("1", 0x100000000UL),
+            ("123456789", 0x75BCD1500000000UL),
+
+            ("0.1", 0x19999999UL),
+            ("1.0", 0x100000000UL),
+            ("1234.5678", 0x4D2915B573EUL),
+
+            (".123", 0x1F7CED91UL),
+            ("321.", 0x14100000000UL),
+            ("-", 0x0UL),
+            (".", 0x0UL),
+            ("-.", 0x0UL),
+
+            ("-0", 0x0UL),
+            ("-1", 0xFFFFFFFF00000000UL),
+            ("-123456789", 0xF8A432EB00000000UL),
+            ("-0.1", 0xFFFFFFFFE6666667UL),
+            ("-1.0", 0xFFFFFFFF00000000UL),
+            ("-1234.5678", 0xFFFFFB2D6EA4A8C2UL),
+            ("-.123", 0xFFFFFFFFE083126FUL),
+            ("-321.", 0xFFFFFEBF00000000UL),
+
+            ("999999999.999999999", 0x3B9AC9FFFFFFFFFBUL),
+            ("-999999999.999999999", 0xC465360000000005UL),
+
+            ("0.5", 0x80000000UL),
+            ("-0.5", 0xFFFFFFFF80000000UL),
+            ("0.25", 0x40000000UL),
+            ("-0.25", 0xFFFFFFFFC0000000UL),
+            ("0.125", 0x20000000UL),
+            ("-0.125", 0xFFFFFFFFE0000000UL)
+        };
+
+        private static readonly List<string> ParseFailureCases = new List<string>
+        {
+            // Overflows
+            "2147483649",
+            "-2147483649",
+
+            // Null, whitespace, empty string
+            null,
+            "",
+            " ",
+            "    ",
+            "\n",
+            " \n ",
+
+            // Negative sign not at beginning of string
+            "9-",
+            "8-.",
+            "7.-",
+            ".-6",
+            ".5-",
+            ".-",
+
+            // Multiple negative signs
+            "--",
+            "----",
+            "-3-",
+            "3--",
+            "--3",
+
+            // Multiple decimal points
+            "..",
+            "....",
+            ".3.",
+            "3..",
+            "..3",
+
+            // Non-standard notations (scientific, hexadecimal, etc.)
+            "4e12",
+            "2F3A",
+
+            // Non-standard characters
+            "one",
+            "ba baa baaaaa",
+            "!!!! onee chan~"
+        };
+
+        [TestMethod]
+        public void CanParseSuccess()
+        {
+            foreach ((string text, _) in ParseSuccessCases)
+                Assert.IsTrue(Fix64.CanParse(text), $"Fix64.CanParse(\"{text}\") returned FALSE unexpectedly!");
+        }
+
+        [TestMethod]
+        public void CanParseFailure()
+        {
+            foreach (string text in ParseFailureCases)
+                Assert.IsFalse(Fix64.CanParse(text), $"Fix64.CanParse(\"{text}\") returned TRUE unexpectedly!");
+        }
+
+        [TestMethod]
+        public void ParseSuccess()
+        {
+            foreach ((string text, ulong rawValue) in ParseSuccessCases)
+            {
+                var expected = rawValue;
+                var actual = (ulong)Fix64.Parse(text).RawValue;
+
+                Assert.AreEqual(expected, actual, $"Fix64.Parse(\"{text}\") returned incorrectly! (Expected: {expected:X}, Actual: {actual:X})");
+            }
+        }
+
+        [TestMethod]
+        public void ParseFailure()
+        {
+            foreach (string text in ParseFailureCases)
+            {
+                Assert.ThrowsException<ArgumentException>(() => Fix64.Parse(text), $"Fix64.Parse(\"{text}\") did not throw ArgumentException!");
+            }
+        }
+
+        [TestMethod]
+        public void TryParseSuccess()
+        {
+            foreach ((string text, ulong rawValue) in ParseSuccessCases)
+            {
+                Assert.IsTrue(Fix64.TryParse(text, out var dummyValue), $"Fix64.TryParse(\"{text}\") returned FALSE unexpectedly!");
+
+                var expected = rawValue;
+                var actual = (ulong)dummyValue.RawValue;
+
+                Assert.AreEqual(expected, actual, $"Fix64.TryParse(\"{text}\") returned incorrectly! (Expected: {expected:X}, Actual: {actual:X})");
+            }
+        }
+
+        [TestMethod]
+        public void TryParseFailure()
+        {
+            foreach (string text in ParseFailureCases)
+            {
+                Assert.IsFalse(Fix64.TryParse(text, out _), $"Fix64.TryParse(\"{text}\") returned TRUE unexpectedly!");
+            }
+        }
     }
 }
