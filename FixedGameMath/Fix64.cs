@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace FixedGameMath
@@ -1255,20 +1256,22 @@ namespace FixedGameMath
             if (digits < 0)
                 throw new ArgumentOutOfRangeException(nameof(digits), "Digits cannot be negative");
 
-            string output = "";
+            // Up to:
+            // 1 sign char, 1 decimal char, 10 integer char, and n decimal digits
+            var output = new StringBuilder(12 + digits);
 
             if (Sign(value) == -1)
             {
-                output += "-";
+                output.Append('-');
                 value = Abs(value);
             }
 
-            output += ((long)Floor(value)).ToString();
+            output.Append(((int)Floor(value)).ToString());
 
             if (!HasFraction(value) || digits == 0)
-                return output;
+                return output.ToString();
 
-            output += ".";
+            output.Append('.');
 
             long fraction = Fraction(value).RawValue;
 
@@ -1279,20 +1282,20 @@ namespace FixedGameMath
                 // Shift downwards 32 to get integer portion
                 // Then implicitly cast the int to string and append it
                 long intPortion = fraction >> 32;
-                output += intPortion;
+                output.Append(intPortion);
                 fraction -= intPortion << 32;
 
                 if (fraction == 0)
                 {
                     // Add the remaining digits as zero
                     if (zeroPad)
-                        output += new String('0', digits - i);
+                        output.Append('0', digits - i);;
 
                     break;
                 }
             }
 
-            return output;
+            return output.ToString();
         }
 
         // Excluded from code coverage because:
