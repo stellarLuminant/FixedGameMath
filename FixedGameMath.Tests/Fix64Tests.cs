@@ -1203,7 +1203,21 @@ namespace FixedGameMath.Tests
             ("0.25", 0x40000000UL),
             ("-0.25", 0xFFFFFFFFC0000000UL),
             ("0.125", 0x20000000UL),
-            ("-0.125", 0xFFFFFFFFE0000000UL)
+            ("-0.125", 0xFFFFFFFFE0000000UL),
+            
+            // Boundaries
+            ("2147483647.99999999976716935634613037109375", (ulong)Fix64.MaxValue.RawValue),
+            ("-2147483648", (ulong)Fix64.MinValue.RawValue),
+
+            // Epsilon
+            ("0.00000000023283064365386962890625", 0x1UL),
+            ("-0.00000000023283064365386962890625", 0xFFFFFFFFFFFFFFFFUL),
+            
+            // Below Epsilon (Should truncate)
+            ("0.00000000023283064365386962890624", 0x0),
+            ("0.0000000001", 0x0),
+            ("-0.00000000023283064365386962890624", 0x0),
+            ("-0.0000000001", 0x0)
         };
 
         private static readonly List<string> ParseFailureCases = new List<string>
@@ -1211,6 +1225,8 @@ namespace FixedGameMath.Tests
             // Overflows
             "2147483649",
             "-2147483649",
+            "99999999999",
+            "-99999999999",
 
             // Null, whitespace, empty string
             null,
@@ -1251,20 +1267,6 @@ namespace FixedGameMath.Tests
             "ba baa baaaaa",
             "!!!! onee chan~"
         };
-
-        [TestMethod]
-        public void CanParseSuccess()
-        {
-            foreach ((string text, _) in ParseSuccessCases)
-                Assert.IsTrue(Fix64.CanParse(text), $"Fix64.CanParse(\"{text}\") returned FALSE unexpectedly!");
-        }
-
-        [TestMethod]
-        public void CanParseFailure()
-        {
-            foreach (string text in ParseFailureCases)
-                Assert.IsFalse(Fix64.CanParse(text), $"Fix64.CanParse(\"{text}\") returned TRUE unexpectedly!");
-        }
 
         [TestMethod]
         public void ParseSuccess()
@@ -1308,6 +1310,251 @@ namespace FixedGameMath.Tests
             {
                 Assert.IsFalse(Fix64.TryParse(text, out _), $"Fix64.TryParse(\"{text}\") returned TRUE unexpectedly!");
             }
+        }
+
+        private static readonly List<(string text, ulong rawValue)> PrintCases = new List<(string text, ulong rawValue)>
+        {
+            ("0", 0x0UL),
+            ("1", 0x100000000UL),
+            ("-1", 0xFFFFFFFF00000000UL),
+
+            ("123456789", 0x75BCD1500000000UL),
+            ("-123456789", 0xF8A432EB00000000UL),
+
+            ("0.09999999986030161380767822265625", 0x19999999UL),
+            ("-0.09999999986030161380767822265625", 0xFFFFFFFFE6666667UL),
+
+            ("1234.5677999998442828655242919921875", 0x4D2915B573EUL),
+            ("-1234.5677999998442828655242919921875", 0xFFFFFB2D6EA4A8C2UL),
+
+            ("0.12299999990500509738922119140625", 0x1F7CED91UL),
+            ("-0.12299999990500509738922119140625", 0xFFFFFFFFE083126FUL),
+
+            ("321", 0x14100000000UL),
+            ("-321", 0xFFFFFEBF00000000UL),
+
+            ("999999999.99999999883584678173065185546875", 0x3B9AC9FFFFFFFFFBUL),
+            ("-999999999.99999999883584678173065185546875", 0xC465360000000005UL),
+
+            ("0.5", 0x80000000UL),
+            ("-0.5", 0xFFFFFFFF80000000UL),
+
+            ("0.25", 0x40000000UL),
+            ("-0.25", 0xFFFFFFFFC0000000UL),
+
+            ("0.125", 0x20000000UL),
+            ("-0.125", 0xFFFFFFFFE0000000UL),
+
+            // Epsilon
+            ("0.00000000023283064365386962890625", 0x1UL),
+            ("-0.00000000023283064365386962890625", 0xFFFFFFFFFFFFFFFFUL)
+        };
+
+        private static readonly List<(string text, ulong rawValue, int digits)> PrintDigitCases = new List<(string text, ulong rawValue, int digits)>
+        {
+            // Reducing precision should truncate
+            ("999999999.99999999883584678173065185546875", 0x3B9AC9FFFFFFFFFBUL, 32),
+            ("999999999.9999999988358467817306518554687", 0x3B9AC9FFFFFFFFFBUL, 31),
+            ("999999999.999999998835846781730651855468", 0x3B9AC9FFFFFFFFFBUL, 30),
+            ("999999999.99999999883584678173065185546", 0x3B9AC9FFFFFFFFFBUL, 29),
+            ("999999999.9999999988358467817306518554", 0x3B9AC9FFFFFFFFFBUL, 28),
+            ("999999999.999999998835846781730651855", 0x3B9AC9FFFFFFFFFBUL, 27),
+            ("999999999.99999999883584678173065185", 0x3B9AC9FFFFFFFFFBUL, 26),
+            ("999999999.9999999988358467817306518", 0x3B9AC9FFFFFFFFFBUL, 25),
+            ("999999999.999999998835846781730651", 0x3B9AC9FFFFFFFFFBUL, 24),
+            ("999999999.99999999883584678173065", 0x3B9AC9FFFFFFFFFBUL, 23),
+            ("999999999.9999999988358467817306", 0x3B9AC9FFFFFFFFFBUL, 22),
+            ("999999999.999999998835846781730", 0x3B9AC9FFFFFFFFFBUL, 21),
+            ("999999999.99999999883584678173", 0x3B9AC9FFFFFFFFFBUL, 20),
+            ("999999999.9999999988358467817", 0x3B9AC9FFFFFFFFFBUL, 19),
+            ("999999999.999999998835846781", 0x3B9AC9FFFFFFFFFBUL, 18),
+            ("999999999.99999999883584678", 0x3B9AC9FFFFFFFFFBUL, 17),
+            ("999999999.9999999988358467", 0x3B9AC9FFFFFFFFFBUL, 16),
+            ("999999999.999999998835846", 0x3B9AC9FFFFFFFFFBUL, 15),
+            ("999999999.99999999883584", 0x3B9AC9FFFFFFFFFBUL, 14),
+            ("999999999.9999999988358", 0x3B9AC9FFFFFFFFFBUL, 13),
+            ("999999999.999999998835", 0x3B9AC9FFFFFFFFFBUL, 12),
+            ("999999999.99999999883", 0x3B9AC9FFFFFFFFFBUL, 11),
+            ("999999999.9999999988", 0x3B9AC9FFFFFFFFFBUL, 10),
+            ("999999999.999999998", 0x3B9AC9FFFFFFFFFBUL, 9),
+            ("999999999.99999999", 0x3B9AC9FFFFFFFFFBUL, 8),
+            ("999999999.9999999", 0x3B9AC9FFFFFFFFFBUL, 7),
+            ("999999999.999999", 0x3B9AC9FFFFFFFFFBUL, 6),
+            ("999999999.99999", 0x3B9AC9FFFFFFFFFBUL, 5),
+            ("999999999.9999", 0x3B9AC9FFFFFFFFFBUL, 4),
+            ("999999999.999", 0x3B9AC9FFFFFFFFFBUL, 3),
+            ("999999999.99", 0x3B9AC9FFFFFFFFFBUL, 2),
+            ("999999999.9", 0x3B9AC9FFFFFFFFFBUL, 1),
+
+            // Increasing precision should not zero pad
+            ("1.5", 0x180000000UL, 1),
+            ("1.5", 0x180000000UL, 2),
+            ("1.5", 0x180000000UL, 3),
+            ("1.5", 0x180000000UL, 4),
+            ("1.5", 0x180000000UL, 5),
+            ("1.5", 0x180000000UL, 6),
+            ("1.5", 0x180000000UL, 7),
+            ("1.5", 0x180000000UL, 8),
+            ("1.5", 0x180000000UL, 9),
+            ("1.5", 0x180000000UL, 10),
+            ("1.5", 0x180000000UL, 11),
+            ("1.5", 0x180000000UL, 12),
+            ("1.5", 0x180000000UL, 13),
+            ("1.5", 0x180000000UL, 14),
+            ("1.5", 0x180000000UL, 15),
+            ("1.5", 0x180000000UL, 16),
+            ("1.5", 0x180000000UL, 17),
+            ("1.5", 0x180000000UL, 18),
+            ("1.5", 0x180000000UL, 19),
+            ("1.5", 0x180000000UL, 20),
+            ("1.5", 0x180000000UL, 21),
+            ("1.5", 0x180000000UL, 22),
+            ("1.5", 0x180000000UL, 23),
+            ("1.5", 0x180000000UL, 24),
+            ("1.5", 0x180000000UL, 25),
+            ("1.5", 0x180000000UL, 26),
+            ("1.5", 0x180000000UL, 27),
+            ("1.5", 0x180000000UL, 28),
+            ("1.5", 0x180000000UL, 29),
+            ("1.5", 0x180000000UL, 30),
+            ("1.5", 0x180000000UL, 31),
+            ("1.5", 0x180000000UL, 32)
+        };
+
+        private static readonly List<(string text, ulong rawValue, int digits)> PrintZeroPadCases = new List<(string text, ulong rawValue, int digits)>
+        {
+            // Reducing precision should truncate
+            ("999999999.99999999883584678173065185546875", 0x3B9AC9FFFFFFFFFBUL, 32),
+            ("999999999.9999999988358467817306518554687", 0x3B9AC9FFFFFFFFFBUL, 31),
+            ("999999999.999999998835846781730651855468", 0x3B9AC9FFFFFFFFFBUL, 30),
+            ("999999999.99999999883584678173065185546", 0x3B9AC9FFFFFFFFFBUL, 29),
+            ("999999999.9999999988358467817306518554", 0x3B9AC9FFFFFFFFFBUL, 28),
+            ("999999999.999999998835846781730651855", 0x3B9AC9FFFFFFFFFBUL, 27),
+            ("999999999.99999999883584678173065185", 0x3B9AC9FFFFFFFFFBUL, 26),
+            ("999999999.9999999988358467817306518", 0x3B9AC9FFFFFFFFFBUL, 25),
+            ("999999999.999999998835846781730651", 0x3B9AC9FFFFFFFFFBUL, 24),
+            ("999999999.99999999883584678173065", 0x3B9AC9FFFFFFFFFBUL, 23),
+            ("999999999.9999999988358467817306", 0x3B9AC9FFFFFFFFFBUL, 22),
+            ("999999999.999999998835846781730", 0x3B9AC9FFFFFFFFFBUL, 21),
+            ("999999999.99999999883584678173", 0x3B9AC9FFFFFFFFFBUL, 20),
+            ("999999999.9999999988358467817", 0x3B9AC9FFFFFFFFFBUL, 19),
+            ("999999999.999999998835846781", 0x3B9AC9FFFFFFFFFBUL, 18),
+            ("999999999.99999999883584678", 0x3B9AC9FFFFFFFFFBUL, 17),
+            ("999999999.9999999988358467", 0x3B9AC9FFFFFFFFFBUL, 16),
+            ("999999999.999999998835846", 0x3B9AC9FFFFFFFFFBUL, 15),
+            ("999999999.99999999883584", 0x3B9AC9FFFFFFFFFBUL, 14),
+            ("999999999.9999999988358", 0x3B9AC9FFFFFFFFFBUL, 13),
+            ("999999999.999999998835", 0x3B9AC9FFFFFFFFFBUL, 12),
+            ("999999999.99999999883", 0x3B9AC9FFFFFFFFFBUL, 11),
+            ("999999999.9999999988", 0x3B9AC9FFFFFFFFFBUL, 10),
+            ("999999999.999999998", 0x3B9AC9FFFFFFFFFBUL, 9),
+            ("999999999.99999999", 0x3B9AC9FFFFFFFFFBUL, 8),
+            ("999999999.9999999", 0x3B9AC9FFFFFFFFFBUL, 7),
+            ("999999999.999999", 0x3B9AC9FFFFFFFFFBUL, 6),
+            ("999999999.99999", 0x3B9AC9FFFFFFFFFBUL, 5),
+            ("999999999.9999", 0x3B9AC9FFFFFFFFFBUL, 4),
+            ("999999999.999", 0x3B9AC9FFFFFFFFFBUL, 3),
+            ("999999999.99", 0x3B9AC9FFFFFFFFFBUL, 2),
+            ("999999999.9", 0x3B9AC9FFFFFFFFFBUL, 1),
+
+            // Increasing precision should zero pad
+            ("1.5", 0x180000000UL, 1),
+            ("1.50", 0x180000000UL, 2),
+            ("1.500", 0x180000000UL, 3),
+            ("1.5000", 0x180000000UL, 4),
+            ("1.50000", 0x180000000UL, 5),
+            ("1.500000", 0x180000000UL, 6),
+            ("1.5000000", 0x180000000UL, 7),
+            ("1.50000000", 0x180000000UL, 8),
+            ("1.500000000", 0x180000000UL, 9),
+            ("1.5000000000", 0x180000000UL, 10),
+            ("1.50000000000", 0x180000000UL, 11),
+            ("1.500000000000", 0x180000000UL, 12),
+            ("1.5000000000000", 0x180000000UL, 13),
+            ("1.50000000000000", 0x180000000UL, 14),
+            ("1.500000000000000", 0x180000000UL, 15),
+            ("1.5000000000000000", 0x180000000UL, 16),
+            ("1.50000000000000000", 0x180000000UL, 17),
+            ("1.500000000000000000", 0x180000000UL, 18),
+            ("1.5000000000000000000", 0x180000000UL, 19),
+            ("1.50000000000000000000", 0x180000000UL, 20),
+            ("1.500000000000000000000", 0x180000000UL, 21),
+            ("1.5000000000000000000000", 0x180000000UL, 22),
+            ("1.50000000000000000000000", 0x180000000UL, 23),
+            ("1.500000000000000000000000", 0x180000000UL, 24),
+            ("1.5000000000000000000000000", 0x180000000UL, 25),
+            ("1.50000000000000000000000000", 0x180000000UL, 26),
+            ("1.500000000000000000000000000", 0x180000000UL, 27),
+            ("1.5000000000000000000000000000", 0x180000000UL, 28),
+            ("1.50000000000000000000000000000", 0x180000000UL, 29),
+            ("1.500000000000000000000000000000", 0x180000000UL, 30),
+            ("1.5000000000000000000000000000000", 0x180000000UL, 31),
+            ("1.50000000000000000000000000000000", 0x180000000UL, 32)
+        };
+
+        [TestMethod]
+        public void Print()
+        {
+            foreach ((string text, ulong rawValue) in PrintCases)
+            {
+                var fixNum = Fix64.FromRaw((long)rawValue);
+                
+                var expected = text;
+                var actual = Fix64.Print(fixNum);
+
+                Assert.AreEqual(expected, actual, $"Fix64.Print(Fix64.FromRaw({rawValue:X})) returned incorrectly! (Expected: {text}, Actual: {actual})");
+            }
+        }
+
+        [TestMethod]
+        public void PrintDigits()
+        {
+            foreach ((string text, ulong rawValue, int digits) in PrintDigitCases)
+            {
+                var fixNum = Fix64.FromRaw((long)rawValue);
+
+                var expected = text;
+                var actual = Fix64.Print(fixNum, digits);
+
+                Assert.AreEqual(expected, actual, $"Fix64.Print(Fix64.FromRaw({rawValue:X}), {digits}) returned incorrectly! (Expected: {text}, Actual: {actual})");
+            }
+        }
+
+        [TestMethod]
+        public void PrintDigitsNoZeroPad()
+        {
+            // Use the same cases as last time- they should be identical to not specifying zero pad.
+            foreach ((string text, ulong rawValue, int digits) in PrintDigitCases)
+            {
+                var fixNum = Fix64.FromRaw((long)rawValue);
+
+                var expected = text;
+                var actual = Fix64.Print(fixNum, digits, false);
+
+                Assert.AreEqual(expected, actual, $"Fix64.Print(Fix64.FromRaw({rawValue:X}), {digits}, FALSE) returned incorrectly! (Expected: {text}, Actual: {actual})");
+            }
+        }
+
+        [TestMethod]
+        public void PrintDigitsZeroPad()
+        {
+            foreach ((string text, ulong rawValue, int digits) in PrintZeroPadCases)
+            {
+                var fixNum = Fix64.FromRaw((long)rawValue);
+
+                var expected = text;
+                var actual = Fix64.Print(fixNum, digits, true);
+
+                Assert.AreEqual(expected, actual, $"Fix64.Print(Fix64.FromRaw({rawValue:X}), {digits}, TRUE) returned incorrectly! (Expected: {text}, Actual: {actual})");
+            }
+        }
+
+        [TestMethod]
+        public void PrintDigitsFailure()
+        {
+            Assert.ThrowsException<ArgumentOutOfRangeException>(() => Fix64.Print(Fix64.Zero, -1));
+            Assert.ThrowsException<ArgumentOutOfRangeException>(() => Fix64.Print(Fix64.Zero, -1, false));
+            Assert.ThrowsException<ArgumentOutOfRangeException>(() => Fix64.Print(Fix64.Zero, -1, true));
         }
     }
 }

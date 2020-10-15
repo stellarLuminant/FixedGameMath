@@ -1105,17 +1105,6 @@ namespace FixedGameMath
             return new Fix64(rawValue);
         }
 
-        private static readonly Regex NumberValidationRegex =
-            new Regex(@"^-?[0-9]*\.?[0-9]*", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-
-        /// <summary>
-        ///     Indicates if the input is a valid string representation of a Fix64 number.
-        /// </summary>
-        public static bool CanParse(string input)
-        {
-            return !string.IsNullOrWhiteSpace(input) && NumberValidationRegex.Match(input).Value == input;
-        }
-
         /// <summary>
         ///     Converts the string representation of a number to its Fix64 equivalent.
         ///     A return value indicates whether the conversion succeeded.
@@ -1195,13 +1184,15 @@ namespace FixedGameMath
             return new Fix64(int.Parse(input));
         }
 
+        private static readonly BigInteger BigIntTen = new BigInteger(10);
+
         private static Fix64 ParseDecString(string input)
         {
-            var threshold = new BigInteger(10);
+            var threshold = BigIntTen;
 
             // Threshold determines where the "integer place" is.
             for (int i = 0; i < input.Length - 1; i++)
-                threshold *= new BigInteger(10);
+                threshold *= BigIntTen;
 
             var intValue = BigInteger.Parse(input);
 
@@ -1235,18 +1226,35 @@ namespace FixedGameMath
         /// </summary>
         public static string Print(Fix64 value)
         {
-            return Print(value, 32);
+            return Print(value, 32, false);
+        }
+
+        /// <summary>
+        /// Prints a Fix64 value to a string with up to a specified number of digits of precision.
+        /// </summary>
+        /// <param name="value">The number to be printed</param>
+        /// <param name="digits">The maximum number of digits to print.</param>
+        /// <exception cref="ArgumentOutOfRangeException">Digits cannot be negative</exception>
+        public static string Print(Fix64 value, int digits)
+        {
+            return Print(value, digits, false);
         }
 
         private static readonly Fix64 Ten = new Fix64(10L * ONE);
 
         /// <summary>
-        /// Prints a Fix64 value as a string with a configurable number of digits.
-        /// The number of digits to print will be greater than 0.
+        /// Prints a Fix64 value as a string with up to a specified number of digits of precision,
+        /// with optional zero padding.
         /// </summary>
-        public static string Print(Fix64 value, int digits)
+        /// <param name="value">The number to be printed</param>
+        /// <param name="digits">The maximum number of digits to print.</param>
+        /// <param name="zeroPad">If set true, the bottom digits will be padded with zeroes to match the digit count.</param>
+        /// <exception cref="ArgumentOutOfRangeException">Digits cannot be negative</exception>
+        public static string Print(Fix64 value, int digits, bool zeroPad)
         {
-            digits = Math.Max(digits, 1);
+            if (digits < 0)
+                throw new ArgumentOutOfRangeException(nameof(digits), "Digits cannot be negative");
+
             string output = "";
 
             if (Sign(value) == -1)
@@ -1257,21 +1265,31 @@ namespace FixedGameMath
 
             output += ((long)Floor(value)).ToString();
 
-            if (!HasFraction(value))
+            if (!HasFraction(value) || digits == 0)
                 return output;
 
             output += ".";
 
-            value = Fraction(value);
+            long fraction = Fraction(value).RawValue;
 
-            for (int i = 0; i < digits; i++)
+            for (int i = 1; i <= digits; i++)
             {
-                value *= Ten;
-                output += value.RawValue >> 32;
-                value = FromRaw(value.RawValue & (1L << 32) - 1L);
+                fraction *= 10L;
 
-                if (value == Zero)
+                // Shift downwards 32 to get integer portion
+                // Then implicitly cast the int to string and append it
+                long intPortion = fraction >> 32;
+                output += intPortion;
+                fraction -= intPortion << 32;
+
+                if (fraction == 0)
+                {
+                    // Add the remaining digits as zero
+                    if (zeroPad)
+                        output += new String('0', digits - i);
+
                     break;
+                }
             }
 
             return output;
