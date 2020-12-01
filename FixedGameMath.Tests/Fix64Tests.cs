@@ -1556,5 +1556,41 @@ namespace FixedGameMath.Tests
             Assert.ThrowsException<ArgumentOutOfRangeException>(() => Fix64.Print(Fix64.Zero, -1, false));
             Assert.ThrowsException<ArgumentOutOfRangeException>(() => Fix64.Print(Fix64.Zero, -1, true));
         }
+
+        [TestMethod]
+        public void Min()
+        {
+            foreach (long a in _testCases)
+            {
+                foreach (long b in _testCases)
+                {
+                    var fixA = Fix64.FromRaw(a);
+                    var fixB = Fix64.FromRaw(b);
+
+                    var expected = a < b ? fixA : fixB;
+                    var actual = Fix64.Min(fixA, fixB);
+
+                    Assert.AreEqual(expected, actual);
+                }
+            }
+        }
+
+        [TestMethod]
+        public void Max()
+        {
+            foreach (long a in _testCases)
+            {
+                foreach (long b in _testCases)
+                {
+                    var fixA = Fix64.FromRaw(a);
+                    var fixB = Fix64.FromRaw(b);
+
+                    var expected = a > b ? fixA : fixB;
+                    var actual = Fix64.Max(fixA, fixB);
+
+                    Assert.AreEqual(expected, actual);
+                }
+            }
+        }
     }
 }

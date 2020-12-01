@@ -1298,6 +1298,22 @@ namespace FixedGameMath
             return output.ToString();
         }
 
+        /// <summary>
+        /// Gets the lesser of two values.
+        /// </summary>
+        public static Fix64 Min(Fix64 a, Fix64 b)
+        {
+            return a._rawValue < b._rawValue ? a : b;
+        }
+
+        /// <summary>
+        /// Gets the greater of two values.
+        /// </summary>
+        public static Fix64 Max(Fix64 a, Fix64 b)
+        {
+            return a._rawValue > b._rawValue ? a : b;
+        }
+
         // Excluded from code coverage because:
         // - this is not part of the user api
         // - this is a part of implementation of already tested functions
